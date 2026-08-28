@@ -49,6 +49,9 @@ data/                          1,436 files, 10.6 GiB (not in git)
       monthly/                 55 wells
       daily/                   23 wells
 cache/                         Parquet caches built by the notebooks (not in git)
+experiments/
+  hgb_baseline.py              global HistGradientBoostingRegressor, temporal holdout
+  hgb_ablation.py              same model with the memory features removed
 notebooks/
   01_explore_camels_gb.ipynb   inventory → attributes → maps → signatures →
                                time series → flood extremes
@@ -88,6 +91,14 @@ matches the EIDC catalogue byte for byte.
 
 4. **`gauge_lat` / `gauge_lon` are rounded to 2 decimal places** — about half a
    kilometre. `gauge_easting` / `gauge_northing` are exact metres; use those.
+
+5. **Half the daily met products stop in 2019.** `precipitation_cehgear`,
+   `pet_chess`, `peti_chess` and `temperature_chess` end on **2019-12-31** and are
+   NaN for the rest of the file; `precipitation_haduk`, `pet_hydrope`,
+   `peti_hydrope` and `temperature_haduk` run to 2022-09-30. Anything built across
+   the full record must use the HadUK-Grid / Hydro-PE columns. Nothing errors if
+   you get this wrong — the columns are simply empty, and models that tolerate NaN
+   will quietly degrade instead of failing.
 
 ## Re-downloading
 

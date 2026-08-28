@@ -9,3 +9,4 @@ pyogrio
 jupyterlab
 ipykernel
 nbconvert
+scikit-learn
