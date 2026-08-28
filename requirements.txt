@@ -1,0 +1,11 @@
+# CAMELS-GB v2 exploration environment
+numpy
+pandas
+pyarrow
+matplotlib
+geopandas
+shapely
+pyogrio
+jupyterlab
+ipykernel
+nbconvert

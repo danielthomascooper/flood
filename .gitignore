@@ -1,0 +1,17 @@
+# Data — 10.6 GiB, re-downloadable via urls-aria.txt
+data/
+
+# Derived caches, rebuilt by the notebooks
+cache/
+
+# Environment
+.venv/
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editor / OS
+.vscode/
+.DS_Store
