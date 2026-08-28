@@ -15,3 +15,7 @@ __pycache__/
 # Editor / OS
 .vscode/
 .DS_Store
+
+# LSTM checkpoints (resume state only; predictions + manifest are the deliverable)
+experiments/results/**/lstm_checkpoint.pt
+experiments/results/lstm_checkpoint.pt

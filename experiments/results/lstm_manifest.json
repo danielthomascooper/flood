@@ -1,0 +1,15 @@
+{
+  "out": "experiments\\results",
+  "epochs": 8,
+  "steps": 1500,
+  "batch": 256,
+  "hidden": 128,
+  "lr": 0.001,
+  "workers": 2,
+  "seed": 0,
+  "device": "xpu",
+  "n_basins": 416,
+  "train_end": "2010-09-30",
+  "test_start": "2010-10-01",
+  "seq": 365
+}
