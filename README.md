@@ -50,8 +50,16 @@ data/                          1,436 files, 10.6 GiB (not in git)
       daily/                   23 wells
 cache/                         Parquet caches built by the notebooks (not in git)
 experiments/
+  common.py                    shared data pipeline (features, splits; HadUK/Hydro-PE forcings)
+  evaluate.py                  shared report card: NSE, KGE, top-1% NSE/bias,
+                               AMAX bias, q99 bias, extrapolation, coverage
   hgb_baseline.py              global HistGradientBoostingRegressor, temporal holdout
   hgb_ablation.py              same model with the memory features removed
+  hgb_targets.py               target transforms: raw / fine-leaf / log1p / norm / q99
+                               (only quantile regression fixes the flood tail)
+  hgb_spatial.py               ungauged split: 83 held-out catchments
+                               (median paired penalty just 0.026 NSE; chalk fails)
+  results/                     the comparison tables from both experiments
 notebooks/
   01_explore_camels_gb.ipynb   inventory → attributes → maps → signatures →
                                time series → flood extremes
