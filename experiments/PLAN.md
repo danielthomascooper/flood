@@ -1,4 +1,4 @@
-# Session handoff — sweeps in flight (2026-08-28)
+# Session handoff (2026-08-28, updated evening)
 
 Written mid-session because the harness's permission classifier went down
 (Bash blocked; Write/Agent still worked). Everything below lets a fresh
@@ -11,16 +11,20 @@ session continue without re-deriving anything.
 | Eval harness (`evaluate.py`, `common.py`) | committed & pushed (900dad0), validated |
 | Target transforms (`hgb_targets.py` + results) | committed & pushed |
 | Spatial split (`hgb_spatial.py` + results) | committed & pushed |
-| Quantile sweep (`hgb_quantiles.py`) | **written, NOT yet run** |
-| Chalk/GW audit (subagent) | launched; check outputs below |
-| Chalk/GW sweep script | **not yet written** — design below |
-| LSTM package (`lstm/train_lstm.py`, `lstm/README.md`) | written, not committed |
-| Artifact correction | edited on disk, **not republished** |
-| This file + lstm/ + hgb_quantiles.py | need commit & push |
+| Quantile sweep (`hgb_quantiles.py` + `results/quantile_sweep.csv`) | **run**, results below |
+| Chalk/GW audit (`cache/build_gw_cache.py`) | **run** — caches in `cache/gw_*.parquet` |
+| Chalk/GW experiment (`hgb_groundwater.py` + `results/groundwater_*.csv`) | **run** — null result, see below |
+| LSTM package (`lstm/train_lstm.py`, `lstm/README.md`) | committed (c71d1bb); not yet run on GPU box |
+| Artifact correction | **republished** (section-6-corrected) |
 
 ## Immediate actions for the next session
 
-1. **Run the quantile sweep** (~25 min, background):
+Items 1–5 below are DONE as of the evening session; kept for the record.
+Remaining: item 6 (LSTM on the GPU box), then score it with the harness
+against `results/`. Optional: GW features in the ungauged split (see the
+groundwater null result below).
+
+1. ~~**Run the quantile sweep**~~ DONE. (~25 min, background):
    `.venv/bin/python experiments/hgb_quantiles.py <scratch-dir>`
    It reuses `targets_q99.parquet` from the scratch dir if present, else refits.
    Old scratch dir (files likely still on disk):
@@ -28,7 +32,7 @@ session continue without re-deriving anything.
    containing `targets_{raw,fine_leaf,log1p,norm,q99}.parquet`, `spatial_*.parquet`,
    `trainmax.parquet`, `hgb_final.parquet`.
 
-2. **Check the groundwater audit output**: `cache/gw_levels_daily.parquet`
+2. ~~**Check the groundwater audit output**~~ DONE.: `cache/gw_levels_daily.parquet`
    (date × 55 well columns) and `cache/gw_well_match.parquet`
    (gauge_id, well_id, dist_km, aquifer, well_train_cov, well_test_cov).
    If missing, re-run the audit: build daily levels per well (daily file when
@@ -37,7 +41,7 @@ session continue without re-deriving anything.
    catchments (hydrometry `daily_flow_perc_complete >= 95`) to nearest well
    by easting/northing.
 
-3. **Write + run `hgb_groundwater.py`** — design:
+3. ~~**Write + run `hgb_groundwater.py`**~~ DONE — design as built:
    - Features added to the standard set from `common.py`: `gw_z` (per-well
      z-score of level, **train-window mean/std only** — no test leakage) and
      `gw_z_d90` (90-day change in z). Catchments with no matched well within
@@ -53,10 +57,10 @@ session continue without re-deriving anything.
      Stapleford). Report paired per-catchment NSE deltas vs raw.
    - Success = chalk subset improves, non-chalk flat, shuffled control flat.
 
-4. **Commit & push**: `experiments/hgb_quantiles.py`, `experiments/lstm/`,
+4. ~~**Commit & push**~~ DONE: `experiments/hgb_quantiles.py`, `experiments/lstm/`,
    this file, quantile + GW results when done.
 
-5. **Republish the corrected artifact.** The falsified §6 paragraph of
+5. ~~**Republish the corrected artifact.**~~ DONE. The falsified §6 paragraph of
    "Trees on the Hydrograph" was replaced with the tested results. Corrected
    file: `<old-scratch-dir>/trees.html` (copy it somewhere durable first).
    Republish by passing `url: https://claude.ai/code/artifact/7e58bb2c-766f-4b41-8d4e-dea88b050f5c`
@@ -87,6 +91,34 @@ All in `experiments/results/*.csv`.
   +0.832 → ungauged +0.784 (median penalty **0.026**); worst failures all
   small chalk catchments → motivates the GW experiment.
 
+- Quantile sweep (α = 0.05…0.99, identical split): every quantile
+  calibrated within ~1.5 pp of nominal (0.05→0.064, 0.50→0.501,
+  0.95→0.936, 0.99→0.983 pooled). 50% interval covers 49.3% at median
+  width 0.24 mm/day; 90% covers 87.5% at 0.64 mm/day. **q50 as a point
+  forecast is worse on floods than the mean** (top-1% NSE −1.66 vs −0.81,
+  AMAX bias −30.5%). 28.6% of rows had crossing quantiles before the
+  monotone sort — independently fitted quantiles are not a free
+  distribution.
+- Groundwater audit: 55 wells (23 daily, 32 monthly), 29 usable with
+  ≥50% coverage in both windows. Nearest *usable* well ≤40 km matches
+  147/416 catchments (median 19.8 km), 14/23 chalk. Granta at Stapleford
+  is 42 km from its nearest usable well → unmatched. The naive
+  nearest-well match hands Lea Brook and Granta a well with 1.9% training
+  coverage — hence the usability filter in `hgb_groundwater.py`.
+- **Groundwater features (temporal split): null.** Adding the nearest
+  usable well's z-scored level (+90-day change, lagged 1 day) changes
+  paired per-catchment NSE by a median of −0.001 (all), −0.003 (chalk),
+  −0.000 (chalk with a well), −0.000 (non-chalk). The chalk subset's median
+  NSE rises 0.728→0.754 with real wells — but rises to 0.751 with
+  **shuffled** wells too, and the five spatial-split failures gain +0.045
+  real vs +0.035 shuffled. Whatever moves is a regional wetness signal the
+  365-day rainfall window already carries, not the catchment's aquifer.
+  Tail metrics unchanged (top-1% NSE −0.815 vs −0.811). Caveats: only 14
+  chalk catchments have a usable well ≤40 km (low power), and this is the
+  *gauged* temporal split — the chalk failure that motivated the test was
+  in the *ungauged* split, which is the natural follow-up
+  (`hgb_spatial.py` + GW features) if the question is worth another run.
+
 ## Environment gotchas (verified this session)
 
 - Daily forcings: use `precipitation_haduk` / `pet_hydrope` /
@@ -96,3 +128,7 @@ All in `experiments/results/*.csv`.
 - Never feed hydrologic signatures (q_mean, baseflow_index, Q5/Q95…) as
   features — they are computed from the target.
 - pandas 3.x: `groupby.apply(..., include_groups=False)`.
+- The box has 11 GB RAM; one `build_dataset()` + fit peaks ~9.5 GB. Run
+  experiments **one at a time**.
+- Fits take ~6 min each; launch multi-fit scripts with `setsid nohup … &`
+  so the harness's 10-minute Bash timeout can't kill them mid-run.
