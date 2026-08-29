@@ -187,6 +187,25 @@ one unsolved thing (ungauged chalk).
 
 Shared donor code now lives in `experiments/nowcast_common.py`.
 
+**Phase 3 CPU results (2026-08-29 pm):**
+
+- **C1: donors move flood-day calibration a long way but do not close
+  it.** AMAX-day q99 coverage 0.829 → 0.896 (q95 0.630 → 0.745), ladder
+  sharper (90% width 0.64 → 0.54 mm/day at unchanged pooled coverage).
+  ~10% of annual maxima remain unflagged even with the neighbours'
+  flood wave — the remaining candidates are sub-daily rain intensity
+  (hourly pilot) and irreducible event surprise. And for the third time,
+  q50-as-point is worse on peaks (AMAX −16.4%) than the mean model of
+  the same feature set (−9.0%).
+- **C2: geology-similar donors halve the remaining ungauged-chalk
+  penalty.** Median chalk penalty raw +0.097 → nearest +0.077 → similar
+  +0.047, ungauged failures 25/26/23 (best), non-chalk unharmed. The
+  filter only changes 80/416 donor sets and costs ~1 km of median
+  distance. The two pathological catchments (Law Brook, Mimram) are
+  dampened but still worse than no donors at all — a donor-trust
+  mechanism (or dropping donors for outlier catchments) is the obvious
+  refinement.
+
 ### Next big build (chosen by Gate 2)
 
 The residual is information at the daily scale: both model classes'
