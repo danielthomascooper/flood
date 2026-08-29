@@ -131,6 +131,27 @@ Windows/macOS (71153d0).
   model, for free. Bankfull threshold skill (C3d): LSTM CSI 0.691, FAR
   0.14 — as an alarm the models beat what amplitude metrics suggest.
 
+### Nowcasting result (2026-08-29, hgb_nowcast.py) — the Gate 2 build, run
+
+Same-day + lag-1 observed flow at the 3 nearest usable gauges (median
+13.2 km; donor-q95-scaled; 628-donor pool), shuffled-donor control.
+
+- **Temporal (gauged): the peak problem largely yields.** Median NSE
+  +0.882 (best of any model, LSTM included), top-1% NSE −0.811 → −0.099,
+  AMAX bias −17.4% → −9.0%, q99 distribution bias −5.4%. The shuffled
+  control is exactly flat (ΔNSE −0.000, AMAX −19.7%): the gain is the
+  local flood wave, not regional wetness. Gate 2's "information" residual
+  is confirmed and addressed — the missing flood-day information exists
+  in real time at the neighbouring gauges.
+- **Spatial (ungauged): the median site is rescued, the pathological
+  ones are not.** Median ungauged penalty +0.030 → −0.006 (an ungauged
+  site with neighbours now matches a gauged site without them), but
+  chalk only improves +0.097 → +0.077, ungauged failures stay ~25, and
+  some groundwater catchments get *worse* (Law Brook −22.6 → −31.8,
+  Mimram −6.7 → −14.2): where a catchment behaves unlike its
+  neighbours, donors actively mislead. The ungauged-chalk problem is
+  now the one clearly unsolved thing in the project.
+
 ### Next big build (chosen by Gate 2)
 
 The residual is information at the daily scale: both model classes'
