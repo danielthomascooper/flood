@@ -110,16 +110,20 @@ What it says:
   bias, ~0.1 of top-1% NSE) is as large as the LSTM–tree gap, so treat the
   two as tied there. Learned state fixes ordinary-day dynamics, not the
   systematic peak under-prediction.
-- **The chalk problem is gone.** Paired per-catchment against the tree
-  (16 ep, seed 0): all 23 chalk catchments improve, median NSE +0.728 →
-  +0.907 (delta +0.122 vs +0.025 for non-chalk), and the five
-  spatial-split failure catchments go from a +0.211 median to +0.815
-  (Colne at Denham −0.07 → +0.76). The biggest wins are all
-  chalk/groundwater rivers (Law Brook −5.89 → +0.63, Mimram, Ver, Wye at
-  Bourne End). This is the aquifer memory the 365-day rain window cannot
-  hold and the nearest-well features failed to supply (see the
-  groundwater null in PLAN.md): the hidden state carries it. Worst LSTM
-  losses anywhere are only ~−0.09.
+- **The weak-catchment problem is gone — chalk included, but not chalk
+  specifically.** Paired per-catchment against the tree (16 ep, seed 0):
+  all 23 chalk catchments improve (+0.728 → +0.907) and the biggest wins
+  are chalk/groundwater rivers (Law Brook −5.89 → +0.63, Mimram, Ver),
+  with worst losses anywhere only ~−0.09. **Correction (2026-08-29
+  audit)** of the "multi-year aquifer memory" reading committed earlier:
+  the windows here are stateless 365-day sequences (the tree's `p_sum365`
+  horizon — multi-year memory is impossible); the gain concentrates on
+  *all* low-NSE / low-variance catchments (non-chalk with tree NSE<0.6
+  gain +0.45 median; variance-matched chalk residual p≈0.11); and
+  per-basin target normalisation — which makes the loss basin-NSE-like —
+  is the live alternative driver. The `--seq 90` run and the tree
+  per-catchment norm refit (PLAN.md Phase 2) are the discriminating
+  tests.
 - **More epochs help a little** everywhere (16 ep is best on every column
   except coverage) and the val curve was still creeping up; worth 32 if
   the LSTM is pursued.

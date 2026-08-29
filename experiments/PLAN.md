@@ -17,6 +17,82 @@ session continue without re-deriving anything.
 | LSTM package (`lstm/train_lstm.py`, `lstm/README.md`) | committed (c71d1bb); not yet run on GPU box |
 | Artifact correction | **republished** (section-6-corrected) |
 
+## Phase 2 (2026-08-29): mechanism + peak diagnosis, two boxes in parallel
+
+Written after a three-way review (evidence audit, ideation over unused
+data assets, literature check). Two open questions, one per box; neither
+box waits on the other after the enabling commit that adds `--seq` and
+`--head quantile` to `train_lstm.py`.
+
+**Q1 (Arc box): is the LSTM's win memory or per-basin loss
+normalisation?**  **Q2 (CPU box): is the peak failure a statistic
+problem, an information problem, or an observation problem?**
+
+Literature stakes (checked 2026-08-29): Lees et al. 2021 report chalk as
+the LSTM *failure* mode on CAMELS-GB, so a validated chalk win would
+invert published results — but only with the mechanism nailed. The
+field's standard reviewer-ask for our evidence is a distributional head
+(Klotz et al. 2022 CMAL); nobody has probed LSTM state against the v2
+groundwater wells (Lees et al. 2022 probed soil moisture/snow only).
+
+### Arc box queue (pull first; run in order)
+
+- A1 **Horizon test** (~50 min):
+  `python experiments/lstm/train_lstm.py --seq 90 --out experiments/results/lstm_seq90`
+  If chalk/weak-catchment gains survive a 90-day window, "memory beyond
+  the tree's rolling windows" is dead and normalisation is the story.
+- A2 **Quantile head** (~1.5 h):
+  `python experiments/lstm/train_lstm.py --head quantile --epochs 16 --out experiments/results/lstm_q`
+  Joint monotone pinball ladder (q05..q99; cannot cross by
+  construction; `pred` = q50). First model combining the two proven
+  wins (LSTM skill + calibrated quantiles). Read AMAX-day coverage of
+  q99 and the q50 point card. NOTE: the head is new code smoke-tested
+  only without torch — watch epoch 0; if loss is NaN or val NSE ≪ 0,
+  report back rather than burning epochs.
+- A3 (conditional on A1 keeping the gains) **More memory**: `--seq 730`
+  — tests whether extra horizon adds anything at all.
+- Commit each run's parquet + manifest + log (same pattern as before),
+  push. Keep runs sequential — parallel runs share the GPU and gain no
+  throughput (measured earlier).
+
+### CPU box queue (11 GB — one job at a time; use setsid nohup)
+
+- C1 **Per-catchment transform refits** (~15 min): refit `norm` and
+  `log1p` (exact `hgb_targets.py` config), save per-catchment NSE →
+  `results/target_transforms_per_catchment.csv`, compare their
+  weak-tree/chalk gains against the LSTM's. The tree-side half of Q1.
+- C2 **Quantile rerun with persistence** (~30 min): rerun
+  `hgb_quantiles.py`, keep `quantile_predictions.parquet` in
+  `results/`, add per-catchment coverage and AMAX-day-only coverage of
+  q95/q99 (pooled 0.983 can hide per-basin miscalibration exactly where
+  the envelope would be used).
+- C3 **Free analyses** (no fits, from files already in `results/` +
+  `cache/` + attribute tables):
+  (a) AMAX event anatomy — per test AMAX event, decompose error into
+      timing offset (±3-day peak match), matched-peak amplitude, and
+      5-day event volume; tree vs LSTM.
+  (b) Rating-curve noise floor — stratify AMAX bias by hydrometry q99
+      uncertainty bounds, extrapolation duration, and obs peak vs
+      `max_gauging_flow` (peaks beyond the highest gauged flow are
+      themselves extrapolations).
+  (c) Free 4-member LSTM ensemble (mean and upper member) from the four
+      prediction parquets already committed.
+  (d) Bankfull-exceedance skill — POD/FAR/CSI against `bankfull_flow`
+      (318 gauges), triggers = raw pred and quantile levels; floods as
+      the threshold decision they operationally are.
+- C4 (optional) **Spatial fold rotation** (5 fits ≈ 30 min): offsets
+  0–4 of the stratified fold → a distribution on the 0.026 ungauged
+  penalty instead of one number.
+
+### Decision gates
+
+- **Gate 1** = C1 + A1: memory-vs-normalisation verdict. Decides whether
+  the cell-state-vs-wells probe (the genuinely novel paper section) is
+  worth building, and what correction the artifact needs.
+- **Gate 2** = C2 + C3 + A2: statistic-vs-information-vs-observation
+  verdict on peaks. Chooses between the hourly pilot and neighbour-gauge
+  nowcasting as the next big build.
+
 ## Immediate actions for the next session
 
 Items 1–5 below are DONE as of the evening session; kept for the record.
@@ -122,12 +198,23 @@ All in `experiments/results/*.csv`.
 - LSTM (run on the Arc box, scored here; cards in
   `results/lstm_cards.csv`): median NSE +0.855 (16 ep) vs tree +0.820,
   no failed catchments, but flood peaks no better (AMAX bias −19 to −22%
-  vs −17%, seed spread as large as the gap). **Paired per catchment, the
-  LSTM erases the chalk failure**: all 23 chalk catchments improve
-  (+0.728 → +0.907 median), the five spatial-split failures go +0.211 →
-  +0.815. Learned state supplies the multi-year aquifer memory that
-  neither the 365-day rain window nor the nearest-well features could —
-  the GW null and the LSTM chalk win are two halves of one finding.
+  vs −17%, seed spread as large as the gap). Chalk catchments improve
+  +0.728 → +0.907, reproducibly across all four runs.
+  **CORRECTION (2026-08-29 audit)** of the interpretation committed in
+  52c2488 ("multi-year aquifer memory"): (a) `train_lstm.py` uses
+  stateless 365-day windows — the same horizon as the tree's `p_sum365`,
+  so multi-year memory is architecturally impossible; (b) the LSTM
+  rescues *all* weak-tree catchments, not chalk specifically (non-chalk
+  with tree NSE<0.6 gain +0.45 median; delta correlates ≈−0.6 with flow
+  variance; variance-matched chalk residual is not significant,
+  p≈0.11); (c) the five "spatial-split failure" catchments have
+  frac_high_perc 5.8–33 — none is chalk under this repo's own ≥50
+  definition; (d) per-basin loss normalisation is the live alternative
+  driver: the tree's own norm/log1p variants already cut failed
+  catchments from 2.6% to 1.2%/0.5% (`target_transforms.csv`). Also
+  noted by the audit: the 16-epoch pick was made on test cards, and
+  quantile calibration was only ever computed pooled. Phase 2 below
+  exists to settle this.
 
 ## Environment gotchas (verified this session)
 

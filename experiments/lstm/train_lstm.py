@@ -35,8 +35,16 @@ import torch.nn as nn
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import STATIC, good_catchments, DAILY, TRAIN_END, TEST_START
 
-SEQ = 365
+SEQ = 365  # overridden by --seq
 FORCINGS = ["precipitation_haduk", "pet_hydrope", "temperature_haduk"]
+ALPHAS = (0.05, 0.25, 0.50, 0.75, 0.95, 0.99)  # --head quantile ladder
+
+
+def to_quantiles(raw):
+    """Monotone ladder: first output is q05, the rest are positive increments,
+    so the quantiles cannot cross (unlike the tree sweep's 28.6% of rows)."""
+    return torch.cat([raw[:, :1],
+                      raw[:, :1] + torch.cumsum(nn.functional.softplus(raw[:, 1:]), 1)], 1)
 
 
 def pick_device():
@@ -76,10 +84,10 @@ class Windows(torch.utils.data.Dataset):
 
 
 class LSTMModel(nn.Module):
-    def __init__(self, n_in, hidden=128, dropout=0.4):
+    def __init__(self, n_in, hidden=128, dropout=0.4, n_out=1):
         super().__init__()
         self.lstm = nn.LSTM(n_in, hidden, batch_first=True)
-        self.head = nn.Sequential(nn.Dropout(dropout), nn.Linear(hidden, 1))
+        self.head = nn.Sequential(nn.Dropout(dropout), nn.Linear(hidden, n_out))
 
     def forward(self, x):
         out, _ = self.lstm(x)
@@ -96,10 +104,19 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--seq", type=int, default=365,
+                    help="input window length in days (the model sees nothing "
+                         "beyond this horizon)")
+    ap.add_argument("--head", choices=["mse", "quantile"], default="mse",
+                    help="quantile = joint monotone pinball head over "
+                         f"{ALPHAS}; pred column is q50, ladder columns "
+                         "q05..q99 added to the parquet. Ignores --tail-weight.")
     ap.add_argument("--tail-weight", type=float, default=0.0,
                     help="alpha in per-sample MSE weight 1 + alpha*max(y_norm, 0); "
-                         "0 = plain MSE. Upweights high-flow days.")
+                         "0 = plain MSE. Upweights high-flow days. mse head only.")
     args = ap.parse_args()
+    global SEQ
+    SEQ = args.seq
 
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
@@ -145,14 +162,22 @@ def main():
     print(f"windows: {len(tr_index):,} train / {len(va_index):,} val / "
           f"{len(te_index):,} test", flush=True)
 
-    model = LSTMModel(len(FORCINGS) + s_z.shape[1], args.hidden).to(dev)
+    n_out = len(ALPHAS) if args.head == "quantile" else 1
+    model = LSTMModel(len(FORCINGS) + s_z.shape[1], args.hidden, n_out=n_out).to(dev)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
-    def lossf(pred, y):
-        se = (pred - y) ** 2
+    alphas_t = torch.tensor(ALPHAS, device=dev)
+    def lossf(raw, y):
+        if args.head == "quantile":
+            e = y.unsqueeze(1) - to_quantiles(raw)
+            return torch.maximum(alphas_t * e, (alphas_t - 1) * e).mean()
+        se = (raw - y) ** 2
         if args.tail_weight > 0:
             w = 1 + args.tail_weight * torch.clamp(y, min=0)
             return (w * se).sum() / w.sum()
         return se.mean()
+    def point(raw):
+        """Point forecast in normalised space: q50 for the quantile head."""
+        return to_quantiles(raw)[:, 2] if args.head == "quantile" else raw
     ckpt = out / "lstm_checkpoint.pt"
     start_ep = 0
     if ckpt.exists():
@@ -169,7 +194,7 @@ def main():
         model.eval(); preds, obs = [], []
         with torch.no_grad():
             for xb, yb, _ in dl:
-                preds.append(model(xb.to(dev)).cpu().numpy()); obs.append(yb.numpy())
+                preds.append(point(model(xb.to(dev))).cpu().numpy()); obs.append(yb.numpy())
         model.train()
         p, o = np.concatenate(preds), np.concatenate(obs)
         return 1 - ((o - p) ** 2).sum() / ((o - o.mean()) ** 2).sum()
@@ -201,7 +226,8 @@ def main():
     model.eval(); preds = []
     with torch.no_grad():
         for xb, _, _ in dl:
-            preds.append(model(xb.to(dev)).cpu().numpy())
+            r = model(xb.to(dev))
+            preds.append((to_quantiles(r) if args.head == "quantile" else r).cpu().numpy())
     p_norm = np.concatenate(preds)
 
     gid = np.array([b for b, _ in te_index], dtype=np.int32)
@@ -209,8 +235,14 @@ def main():
     sd = np.array([y_stats[b][1] for b, _ in te_index], dtype=np.float32)
     obs = np.array([Y[b][t] for b, t in te_index], dtype=np.float32) * sd + mu
     idx = pd.DatetimeIndex([dates[b][t] for b, t in te_index], name="date")
-    res = pd.DataFrame({"gid": gid, "obs": obs,
-                        "pred": np.clip(p_norm * sd + mu, 0, None)}, index=idx)
+    if args.head == "quantile":
+        q = np.clip(p_norm * sd[:, None] + mu[:, None], 0, None)
+        res = pd.DataFrame({"gid": gid, "obs": obs, "pred": q[:, 2]}, index=idx)
+        for a, col in zip(ALPHAS, q.T):
+            res[f"q{int(a*100):02d}"] = col
+    else:
+        res = pd.DataFrame({"gid": gid, "obs": obs,
+                            "pred": np.clip(p_norm * sd + mu, 0, None)}, index=idx)
     res.to_parquet(out / "lstm_test_predictions.parquet")
     (out / "lstm_manifest.json").write_text(json.dumps(
         {**vars(args), "device": str(dev), "n_basins": len(gauges),
