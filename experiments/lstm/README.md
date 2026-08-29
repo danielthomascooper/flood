@@ -110,6 +110,16 @@ What it says:
   bias, ~0.1 of top-1% NSE) is as large as the LSTM–tree gap, so treat the
   two as tied there. Learned state fixes ordinary-day dynamics, not the
   systematic peak under-prediction.
+- **The chalk problem is gone.** Paired per-catchment against the tree
+  (16 ep, seed 0): all 23 chalk catchments improve, median NSE +0.728 →
+  +0.907 (delta +0.122 vs +0.025 for non-chalk), and the five
+  spatial-split failure catchments go from a +0.211 median to +0.815
+  (Colne at Denham −0.07 → +0.76). The biggest wins are all
+  chalk/groundwater rivers (Law Brook −5.89 → +0.63, Mimram, Ver, Wye at
+  Bourne End). This is the aquifer memory the 365-day rain window cannot
+  hold and the nearest-well features failed to supply (see the
+  groundwater null in PLAN.md): the hidden state carries it. Worst LSTM
+  losses anywhere are only ~−0.09.
 - **More epochs help a little** everywhere (16 ep is best on every column
   except coverage) and the val curve was still creeping up; worth 32 if
   the LSTM is pursued.

@@ -119,6 +119,16 @@ All in `experiments/results/*.csv`.
   in the *ungauged* split, which is the natural follow-up
   (`hgb_spatial.py` + GW features) if the question is worth another run.
 
+- LSTM (run on the Arc box, scored here; cards in
+  `results/lstm_cards.csv`): median NSE +0.855 (16 ep) vs tree +0.820,
+  no failed catchments, but flood peaks no better (AMAX bias −19 to −22%
+  vs −17%, seed spread as large as the gap). **Paired per catchment, the
+  LSTM erases the chalk failure**: all 23 chalk catchments improve
+  (+0.728 → +0.907 median), the five spatial-split failures go +0.211 →
+  +0.815. Learned state supplies the multi-year aquifer memory that
+  neither the 365-day rain window nor the nearest-well features could —
+  the GW null and the LSTM chalk win are two halves of one finding.
+
 ## Environment gotchas (verified this session)
 
 - Daily forcings: use `precipitation_haduk` / `pet_hydrope` /
