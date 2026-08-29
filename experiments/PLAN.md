@@ -269,7 +269,24 @@ caveat: hourly rain and hourly donors are confounded in this pilot.
 Findings in `lstm/README.md` ("Phase 4, Arc box").
 
 **CPU box / this machine:** the rigorous write-up of all findings as an
-artifact (in progress), plus scoring the pilot when it returns.
+artifact (published: "Where the Floods Went"), plus scoring the pilot.
+
+**Phase 4 verdict (2026-08-30): the hourly pilot succeeds on its named
+criterion.** Of the 145 both-missed AMAX events inside the 60 pilot
+catchments, the hourly quantile model's envelope covers ~72–77% at the
+daily-mean level (71.7% by the main-machine replication matching on the
+local obs-max day, 76.6% by the Arc box's exact-date match) — events
+both daily ladders missed 100% of by construction. At the instantaneous
+hourly peak, coverage is 51–69% (matching-dependent), and 90–94% over
+all pilot AMAX days. Daily-aggregate point skill is at parity with the
+daily donor LSTM (median NSE +0.869 vs +0.867). So the residual was
+real information sitting below the daily sampling rate — mostly
+recoverable, at the price of hourly data. Caveats: hourly rain and
+hourly donor flows are confounded in this pilot (both changed at once);
+hourly discharge is mm/h (daily aggregates are 24× smaller than the
+daily files — a units trap for any cross-comparison); post-2016 gradgb
+outages are zero-filled with a rain_gap flag column. The project's
+question ladder is, at this point, answered at every rung.
 
 ### Next big build (chosen by Gate 2)
 
