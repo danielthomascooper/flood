@@ -31,6 +31,7 @@ SCRATCH = Path(sys.argv[1]) if len(sys.argv) > 1 else OUT
 MODELS = {
     "tree": OUT / "tree_test_predictions.parquet",
     "lstm_e16": OUT / "lstm_e16" / "lstm_test_predictions.parquet",
+    "nowcast": OUT / "nowcast_test_predictions.parquet",
 }
 ENSEMBLE = {
     "e8s0": OUT / "lstm_test_predictions.parquet",

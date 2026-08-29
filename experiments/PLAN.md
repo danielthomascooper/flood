@@ -202,9 +202,18 @@ Shared donor code now lives in `experiments/nowcast_common.py`.
   +0.047, ungauged failures 25/26/23 (best), non-chalk unharmed. The
   filter only changes 80/416 donor sets and costs ~1 km of median
   distance. The two pathological catchments (Law Brook, Mimram) are
-  dampened but still worse than no donors at all — a donor-trust
-  mechanism (or dropping donors for outlier catchments) is the obvious
-  refinement.
+  dampened but still worse than no donors at all.
+- **C3 (donor-trust features): a tail fix, not a median fix.** Adding
+  per-donor gauge-free dissimilarity (geology gap, log-area gap,
+  distance) to the similar-donor folds drops chalk ungauged failures to
+  2 (best of all variants) and improves every pathological catchment
+  (Mimram −10.5 → −7.2, Ver/Burn → −2.8), but the median chalk penalty
+  regresses to +0.085 vs the hard filter's +0.047 — the extra columns
+  dilute the typical catchment. **Recommended ungauged config stays
+  `similar` (hard geology filter)**; trust features are worth revisiting
+  only as a per-catchment fallback. Nowcast diagnostics also added to
+  the C3 CSVs: best event anatomy across the board (matched-peak 0.855,
+  5-day volume 0.927), bankfull POD 0.797 (LSTM keeps best CSI 0.691).
 
 ### Next big build (chosen by Gate 2)
 
