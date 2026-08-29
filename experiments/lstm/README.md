@@ -137,3 +137,26 @@ What it says:
 `1 + ALPHA * max(y_norm, 0)` (normalised by the weight sum); 0 = plain MSE.
 To extend a finished run, copy its `lstm_checkpoint.pt` into a new `--out`
 directory and rerun with a larger `--epochs`; the script resumes from it.
+
+## Phase 2, Arc box (2026-08-29)
+
+**A1 horizon test, `--seq 90`** (8 ep, seed 0; `results/lstm_seq90/`,
+paired numbers in `results/lstm_seq_paired.csv`, cards in
+`results/lstm_seq_cards.csv`). 90-day windows train 4x faster (~90 s/epoch)
+and reach val NSE(norm) +0.803 vs +0.824 at 365 days.
+
+| paired NSE gain vs tree | seq 365 | seq 90 | survives |
+|---|---|---|---|
+| all 416 | +0.023 | +0.018 | 78% |
+| weak-tree (NSE<0.6, n=35) | +0.426 | +0.372 | 87% |
+| chalk (n=23) | +0.098 | +0.046 | 47% |
+
+Paired seq90 − seq365: −0.005 overall, −0.045 weak-tree, **−0.057 chalk**.
+Reading: the weak-catchment rescue is mostly *not* horizon — it survives
+a 90-day window, consistent with per-basin normalisation being the driver
+(Gate 1 tree-side refit will confirm). Chalk is the exception: half its
+gain needs the 90–365-day range, i.e. the LSTM extracts more from the
+same horizon than the tree's `p_sum180/365` do. Card-wise the 90-day model
+is still ahead of the tree (median NSE +0.840, no failed catchments) with
+the same peak under-prediction (AMAX bias −19.8%). A3 (`--seq 730`) is
+queued to test whether horizon beyond 365 days adds anything for chalk.
