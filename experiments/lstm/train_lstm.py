@@ -24,7 +24,7 @@ loss. Deliberately plain -- one LSTM layer, no attention, no embeddings --
 because the question is whether learned state beats hand-built rolling
 windows, not to win a leaderboard.
 """
-import argparse, json, sys, time
+import argparse, json, re, sys, time
 from pathlib import Path
 
 import numpy as np
@@ -65,6 +65,44 @@ def load_basins(gauges):
                         ).set_index("date")
         frames[gid] = d.astype("float32")
     return frames
+
+
+def donor_features(gauges, k, train_end):
+    """Same-day + lag-1 observed flow at each basin's k nearest usable gauges
+    (scaled by the donor's own train-window q95), the feature set that halved
+    the tree's AMAX bias in hgb_nowcast.py. Donor pool is every gauge in the
+    daily folder with >=50% coverage in both windows; a basin is never its
+    own donor. Gaps ffilled up to 7 days then set to 0."""
+    from common import read_attr
+    cols = {}
+    for f in sorted(DAILY.glob("*.csv")):
+        gid = int(re.search(r"_(\d+)_\d{8}-\d{8}\.csv$", f.name).group(1))
+        cols[gid] = pd.read_csv(f, parse_dates=["date"], na_values=["NaN"],
+                                usecols=["date", "discharge_spec"]
+                                ).set_index("date")["discharge_spec"].astype("float32")
+    F = pd.DataFrame(cols)
+    tr = F.loc[:train_end]
+    usable = F.columns[(tr.notna().mean() >= 0.5)
+                       & (F.loc[pd.Timestamp(TEST_START):].notna().mean() >= 0.5)]
+    D0 = (F[usable] / tr[usable].quantile(0.95)).astype("float32")
+
+    topo = read_attr("topographic").set_index("gauge_id")
+    ex = topo.gauge_easting.astype(float)
+    ny = topo.gauge_northing.astype(float)
+    dx = ex.loc[gauges].values[:, None] - ex.loc[usable].values[None, :]
+    dy = ny.loc[gauges].values[:, None] - ny.loc[usable].values[None, :]
+    Dk = np.sqrt(dx ** 2 + dy ** 2)
+    self_col = {g: j for j, g in enumerate(usable)}
+    out = {}
+    for i, g in enumerate(gauges):
+        row = Dk[i].copy()
+        if g in self_col:
+            row[self_col[g]] = np.inf
+        donors = usable[np.argsort(row)[:k]]
+        d0 = D0[donors]
+        feats = pd.concat([d0, d0.shift(1)], axis=1)
+        out[g] = feats.ffill(limit=7).fillna(0.0).astype("float32")
+    return out
 
 
 class Windows(torch.utils.data.Dataset):
@@ -117,6 +155,9 @@ def main():
     ap.add_argument("--tail-weight", type=float, default=0.0,
                     help="alpha in per-sample MSE weight 1 + alpha*max(y_norm, 0); "
                          "0 = plain MSE. Upweights high-flow days. mse head only.")
+    ap.add_argument("--donors", type=int, default=0,
+                    help="K nearest-gauge nowcast features (same-day + lag-1 "
+                         "q95-scaled observed flow per donor); 0 = off")
     args = ap.parse_args()
     global SEQ
     SEQ = args.seq
@@ -141,11 +182,20 @@ def main():
     stat = stat.fillna(stat.median())
     s_z = ((stat - stat.mean()) / (stat.std() + 1e-6)).astype("float32")
 
+    donor = donor_features(gauges, args.donors, train_end) if args.donors else None
+    if donor is not None:
+        print(f"donor features: {args.donors} nearest gauges "
+              f"(2x{args.donors} columns per basin)", flush=True)
+
     X, Y, S, y_stats = {}, {}, {}, {}
     tr_index, va_index, te_index, dates = [], [], [], {}
     val_start = train_end - pd.DateOffset(years=3)
     for b, d in frames.items():
         X[b] = ((d[FORCINGS].to_numpy("float32") - f_mean) / f_std)
+        if donor is not None:
+            X[b] = np.concatenate(
+                [X[b], donor[b].reindex(d.index).fillna(0.0).to_numpy("float32")],
+                axis=1)
         y = d["discharge_spec"].to_numpy("float32")
         ytr = d.loc[:train_end, "discharge_spec"]
         mu, sd = float(ytr.mean()), float(ytr.std()) + 1e-6
@@ -166,7 +216,8 @@ def main():
           f"{len(te_index):,} test", flush=True)
 
     n_out = len(ALPHAS) if args.head == "quantile" else 1
-    model = LSTMModel(len(FORCINGS) + s_z.shape[1], args.hidden, n_out=n_out).to(dev)
+    n_dyn = next(iter(X.values())).shape[1]
+    model = LSTMModel(n_dyn + s_z.shape[1], args.hidden, n_out=n_out).to(dev)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
     alphas_t = torch.tensor(ALPHAS, device=dev)
     def lossf(raw, y):

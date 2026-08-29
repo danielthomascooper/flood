@@ -152,6 +152,41 @@ Same-day + lag-1 observed flow at the 3 nearest usable gauges (median
   neighbours, donors actively mislead. The ungauged-chalk problem is
   now the one clearly unsolved thing in the project.
 
+### Phase 3 (2026-08-29 pm): the synthesis, two boxes in parallel
+
+Everything proven so far in one place: nowcast donors fix flood-day
+information (temporal), quantile heads fix the statistic, the LSTM's
+normalisation wins ordinary days. Phase 3 combines them and attacks the
+one unsolved thing (ungauged chalk).
+
+**Arc box queue** (pull first — train_lstm.py now has `--donors K`):
+
+- B1 **LSTM + donors, point** (~1.5 h):
+  `python experiments/lstm/train_lstm.py --donors 3 --epochs 16 --out experiments/results/lstm_nowcast`
+  Does the LSTM still add anything over the nowcast tree (+0.882) once
+  both see the neighbours? Donor build loads all 671 daily files
+  (~2-3 min) and appends 6 q95-scaled columns per basin.
+- B2 **LSTM + donors, quantile head** (~1.5 h):
+  `python experiments/lstm/train_lstm.py --donors 3 --head quantile --epochs 16 --out experiments/results/lstm_qnow`
+  The full synthesis. The one number that matters: AMAX-day q99 coverage
+  (0.847 without donors; nominal 0.99).
+- Commit each run's parquet + manifest + log; push. UTF-8 writes only.
+
+**CPU box queue** (one at a time):
+
+- C1 **Tree quantile ladder + donors** (~40 min, `hgb_quantiles_nowcast.py`):
+  the tree twin of B2 — does AMAX-day q99 coverage climb from 0.829
+  toward 0.99, and does the ladder sharpen? Writes
+  `results/quantile_nowcast_calibration.csv` with the no-donor column
+  alongside.
+- C2 **Similarity-restricted donors for ungauged chalk** (~35 min,
+  `hgb_nowcast_similar.py`): donors filtered to |frac_high_perc − target|
+  ≤ 20 before taking the nearest 3 (gauge-free similarity, so the setting
+  stays honestly ungauged). Success = chalk penalty and the pathological
+  worseners (Law Brook, Mimram) improve vs the nearest-donor run.
+
+Shared donor code now lives in `experiments/nowcast_common.py`.
+
 ### Next big build (chosen by Gate 2)
 
 The residual is information at the daily scale: both model classes'
