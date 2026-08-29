@@ -55,7 +55,7 @@ qcols = [f"q{int(a*100):02d}" for a in ALPHAS]
 raw = Q[qcols].to_numpy()
 crossing = float((np.diff(raw, axis=1) < 0).any(axis=1).mean())
 Q[qcols] = np.sort(raw, axis=1)          # enforce monotone quantiles
-Q.to_parquet(SCRATCH / "quantile_predictions.parquet")
+Q.to_parquet(OUT / "quantile_predictions.parquet")   # persisted: audit flagged scratch dirs as perishable
 
 obs = Q["obs"].to_numpy()
 rows = []
