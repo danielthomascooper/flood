@@ -19,3 +19,5 @@ __pycache__/
 # LSTM checkpoints (resume state only; predictions + manifest are the deliverable)
 experiments/results/**/lstm_checkpoint.pt
 experiments/results/lstm_checkpoint.pt
+# full hourly ladder parquet exceeds GitHub 100 MB; the _slim version is committed
+experiments/results/lstm_hourly_q/lstm_hourly_test_predictions.parquet

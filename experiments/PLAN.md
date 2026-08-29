@@ -257,6 +257,17 @@ max-of-both-envelopes union already covers ~95.5% of AMAX days.)
   succeeds if the hourly model's envelope covers a material share of
   exactly those events.
 
+**Arc box status (2026-08-30, 00:15): A0, A1, A2 all DONE, committed and
+pushed** — `results/lstm_hourly/`, `results/lstm_hourly_q/` (slim hourly
+ladder 98 MB + full ladder in the daily aggregate; the 222 MB full hourly
+file is gitignored). Rain-gap fix in `train_lstm_hourly.py` (fb661a8).
+Local sanity on the 60 pilot catchments: A1 daily-agg NSE +0.869 =
+daily donor LSTM; A2 daily-agg q99 covers **76.6%** of the 145 pilot
+both-missed events (hourly q99 vs hourly peak: 69.0%), 94.2% of all
+pilot AMAX days. Success criterion met, pending the rigorous scoring here;
+caveat: hourly rain and hourly donors are confounded in this pilot.
+Findings in `lstm/README.md` ("Phase 4, Arc box").
+
 **CPU box / this machine:** the rigorous write-up of all findings as an
 artifact (in progress), plus scoring the pilot when it returns.
 

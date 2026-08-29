@@ -314,3 +314,32 @@ understates true peaks by ~40%. On daily aggregates the hourly model is at
 parity with the daily donor LSTM; the pilot's real question (does the hourly
 *envelope* cover the 225 both-missed events, 145 of which are on pilot
 catchments) waits for A2's quantile head.
+
+**A2 hourly, quantile head** (`results/lstm_hourly_q/`, 10 ep): q50 val
+NSE(norm) +0.806 peak, +0.805 final. The full hourly ladder parquet is
+222 MB (over GitHub's limit, gitignored); the committed
+`lstm_hourly_test_predictions_slim.parquet` (98 MB) keeps
+`obs / pred(=q50) / q95 / q99 / rain_gap`, and `lstm_hourly_daily_agg.parquet`
+(12 MB) carries the full six-quantile ladder as daily means.
+
+Local sanity numbers on the 60 pilot catchments (rigorous scoring on the
+main machine):
+
+- Daily-aggregate q50 card: median NSE **+0.880** (mse head +0.869, daily
+  donor LSTM +0.867), AMAX bias −18.0% (q50 pattern again), 1 failed
+  catchment.
+- **Both-missed events** (145 of the 225 are on pilot catchments; by
+  construction 0% were inside either daily ladder's q99):
+  daily-aggregate hourly-model q99 ≥ daily obs on **76.6%** of them;
+  hourly q99 (max over the day) ≥ the hourly peak on **69.0%**, median
+  q99/peak 1.21. Over *all* pilot-catchment AMAX days the hourly q99
+  covers the hourly peak on 94.2%.
+
+Reading: the pilot's success criterion is met — most of the events that
+were invisible to both daily model classes fall inside the hourly
+model's nominal-99% envelope. Caveat the main-machine scoring should
+separate: the hourly model sees both hourly rain *and* hourly donor
+flows, so this does not by itself attribute the gain to rain intensity
+vs. finer-resolution neighbour flows; an hourly run with daily-mean rain
+(or without donors) is the discriminating follow-up. The 14% of test
+rows with `rain_gap > 0` are included above.
