@@ -128,11 +128,17 @@ def main():
     print(f"loading {len(have)} hourly files "
           f"({len(targets)} targets + donors)...", flush=True)
     t0 = time.time()
-    rain, flow = {}, {}
+    rain, flow, gap = {}, {}, {}
     for g in sorted(have):
         d = load_hourly(g, ["precipitation_cehgear", "precipitation_gradgb",
                             "discharge_spec"])
-        rain[g] = d.precipitation_gradgb.fillna(d.precipitation_cehgear)
+        r = d.precipitation_gradgb.fillna(d.precipitation_cehgear)
+        # 77 product-wide gradgb outages after cehgear ends (1,203 h in
+        # 2017-22, median 4 h, max 383 h) would otherwise poison ~15% of
+        # test windows with NaN. Fill with 0 and report the per-window gap
+        # count in the output so the scorer can flag those rows.
+        gap[g] = r.isna().to_numpy()
+        rain[g] = r.fillna(0.0)
         flow[g] = d.discharge_spec
     print(f"  loaded in {time.time()-t0:.0f}s", flush=True)
 
@@ -259,6 +265,9 @@ def main():
     sd = np.array([y_stats[b][1] for b, _ in te_index], dtype=np.float32)
     obs = np.array([Y[b][t] for b, t in te_index], dtype=np.float32) * sd + mu
     idx = pd.DatetimeIndex([dates[b][t] for b, t in te_index], name="date")
+    gcum = {b: np.concatenate([[0], np.cumsum(gap[b])]) for b in targets}
+    wgap = np.array([gcum[b][t + 1] - gcum[b][t + 1 - args.seq] for b, t in te_index],
+                    dtype=np.int16)
     if args.head == "quantile":
         q = np.clip(p_norm * sd[:, None] + mu[:, None], 0, None)
         res = pd.DataFrame({"gid": gid, "obs": obs, "pred": q[:, 2]}, index=idx)
@@ -267,6 +276,7 @@ def main():
     else:
         res = pd.DataFrame({"gid": gid, "obs": obs,
                             "pred": np.clip(p_norm * sd + mu, 0, None)}, index=idx)
+    res["rain_gap"] = wgap          # NaN rain hours inside the window (0 = clean)
     res.to_parquet(out / "lstm_hourly_test_predictions.parquet")
     daily = res.groupby([res.gid, res.index.floor("D")]).mean()
     daily.index.names = ["gid", "date"]
