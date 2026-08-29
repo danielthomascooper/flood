@@ -288,3 +288,29 @@ either donor ladder (tree or LSTM, ~0.89 AMAX-day q99 coverage); use the
 LSTM one if the point forecast matters too, since it comes from the same
 model. Timings on the Arc: donor build 20 s, ~4.5–6 min/epoch, 16 epochs
 + inference ≈ 1.5 h per run.
+
+## Phase 4, Arc box — hourly pilot (2026-08-29 night)
+
+Data: 198 hourly files (3.0 GB) fetched from CEH with parallel curl. Blended
+rain `gradgb.fillna(cehgear)` still has 1,203 NaN hours per gauge (77
+product-wide gradgb outages in 2017–22, identical across gauges); these are
+zero-filled and the hourly parquet carries `rain_gap` = NaN rain hours inside
+the 336-h window (14% of test rows > 0) so the scorer can flag them.
+8.75M train / 6.28M test hourly windows; ~4m45s per epoch, ~17 min inference.
+
+**A1 hourly, mse head** (`results/lstm_hourly/`, 10 ep): val NSE(norm) +0.719
+after one epoch, +0.811 peak, +0.810 final. Local sanity card on the 60 pilot
+catchments (the rigorous scoring is on the main machine):
+
+| model (60 pilot catchments) | median NSE | top-1% NSE | AMAX bias | q99 bias |
+|---|---|---|---|---|
+| tree nowcast | +0.831 | −0.745 | −23.1% | −12.9% |
+| daily LSTM + donors (B1) | +0.867 | −0.183 | −16.9% | −7.8% |
+| **hourly LSTM, daily-mean aggregate** | **+0.869** | −0.212 | **−15.7%** | −12.1% |
+| hourly LSTM, hourly resolution | +0.841 | −0.128 | −21.0% | −10.6% |
+
+Hourly AMAX / daily-mean AMAX: median **1.42×**, q90 2.29× — daily averaging
+understates true peaks by ~40%. On daily aggregates the hourly model is at
+parity with the daily donor LSTM; the pilot's real question (does the hourly
+*envelope* cover the 225 both-missed events, 145 of which are on pilot
+catchments) waits for A2's quantile head.
