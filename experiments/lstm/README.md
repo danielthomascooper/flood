@@ -221,3 +221,30 @@ catchments — inside the seed spread (±0.005). The 90→365 step was worth
   honest chalk claim is: *per-basin loss normalisation plus a 365-day
   window fixes the chalk failure; the tree gets most of the way there
   with `log1p`.*
+
+## Phase 3, Arc box (2026-08-29 evening)
+
+**B1 LSTM + 3 nearest-gauge donors, point head, `--donors 3 --epochs 16`**
+(`results/lstm_nowcast/`; cards `results/lstm_nowcast_cards.csv`, paired
+`results/lstm_nowcast_paired.csv`). Donor build takes 20 s on this box
+(median donor distance 13.2 km, as in `hgb_nowcast.py`; no self-donors).
+Val NSE(norm) +0.832 after one epoch (the no-donor runs took 16 epochs to
+get there), +0.883 final.
+
+| | tree raw | tree nowcast | lstm (no donors) | **lstm + donors** |
+|---|---|---|---|---|
+| median NSE | +0.820 | +0.882 | +0.855 | **+0.914** |
+| median KGE | +0.815 | +0.859 | +0.822 | **+0.891** |
+| % catchments NSE<0 | 2.6 | 1.9 | 0 | **0** |
+| top-1% NSE | −0.811 | −0.099 | −0.572 | **+0.201** |
+| top-1% bias | −23.9% | −14.1% | −23.9% | **−10.6%** |
+| AMAX bias | −17.4% | −9.0% | −19.2% | **−6.6%** |
+| q99 dist bias | −11.5% | −5.4% | −14.2% | **−2.2%** |
+
+Paired per-catchment vs the nowcast tree: +0.021 median NSE, LSTM better
+on **80%** of catchments; chalk +0.079 (96% better); weak-tree +0.313
+(94% better). Without donors the LSTM was *behind* the nowcast tree
+(−0.025, better on 37%). So the two wins are additive: donors supply the
+flood-day information, normalisation supplies the weak-catchment fit,
+and the combination is the first model in the project with a positive
+top-1% NSE and single-digit AMAX bias.
