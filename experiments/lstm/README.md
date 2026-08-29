@@ -248,3 +248,43 @@ on **80%** of catchments; chalk +0.079 (96% better); weak-tree +0.313
 flood-day information, normalisation supplies the weak-catchment fit,
 and the combination is the first model in the project with a positive
 top-1% NSE and single-digit AMAX bias.
+
+**B2 LSTM + donors, quantile head, `--donors 3 --head quantile --epochs 16`**
+(`results/lstm_qnow/`; cards `results/lstm_nowcast_cards.csv`, calibration
+`results/lstm_qnow_calibration.csv`). Zero crossing rows; q50 val NSE(norm)
++0.880 final (+0.884 peak), pinball loss 0.041 vs 0.047 without donors.
+
+AMAX-day coverage (fraction of annual maxima ≤ quantile; nominal 0.99 / 0.95):
+
+| ladder | q99 on AMAX days | q95 on AMAX days | q99 pooled | 90% width mm/day |
+|---|---|---|---|---|
+| tree, no donors | 0.829 | 0.630 | 0.983 | 0.64 |
+| lstm, no donors (A2) | 0.847 | 0.625 | 0.985 | 0.54 |
+| tree + donors (CPU C1) | 0.896 | 0.745 | 0.983 | 0.54 |
+| **lstm + donors (B2)** | **0.892** | 0.725 | 0.986 | **0.52** |
+
+Point forecasts: q50 median NSE +0.909 (mean head B1 +0.914), top-1% NSE
+−0.010, AMAX bias **−15.0%** vs the mean head's −6.6% — the
+median-under-shoots-peaks pattern replicates a fourth time (tree q50
+−30.5%, tree nowcast q50 −16.4%, LSTM q50 −23.5%, this −15.0%). Paired vs
+the nowcast tree: +0.018 median, better on 77% of catchments; chalk
++0.086 (100%); weak-tree +0.338. On AMAX days q50 sits at 0.80× obs
+(0.68× without donors) and q99 at 1.36×.
+
+Reading: donors lift flood-day envelope coverage by ~4.5 pp in *both*
+model classes and to the *same* level (~0.89–0.90); the LSTM ladder is
+marginally sharper but no better on the tail. The LSTM's advantage over
+the tree is entirely in the centre and in weak/chalk catchments. The
+~10% of annual maxima that neither calibrated ladder flags, even with
+same-day neighbour flows, is model-class-independent — consistent with
+the Gate 2 candidates that are not daily-scale modelling problems
+(sub-daily rain intensity, peaks beyond the gauged range).
+
+### Phase 3 Arc summary
+
+Best point model in the project: B1 (`lstm_nowcast`), median NSE +0.914,
+AMAX bias −6.6%, top-1% NSE +0.201, no failed catchments. Best envelope:
+either donor ladder (tree or LSTM, ~0.89 AMAX-day q99 coverage); use the
+LSTM one if the point forecast matters too, since it comes from the same
+model. Timings on the Arc: donor build 20 s, ~4.5–6 min/epoch, 16 epochs
++ inference ≈ 1.5 h per run.

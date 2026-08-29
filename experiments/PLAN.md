@@ -172,6 +172,18 @@ one unsolved thing (ungauged chalk).
   (0.847 without donors; nominal 0.99).
 - Commit each run's parquet + manifest + log; push. UTF-8 writes only.
 
+**Arc box status (2026-08-29, late): B1 and B2 DONE, committed and
+pushed** — `results/lstm_nowcast/`, `results/lstm_qnow/`, cards in
+`results/lstm_nowcast_cards.csv`, paired `results/lstm_nowcast_paired.csv`,
+calibration `results/lstm_qnow_calibration.csv`; findings in
+`lstm/README.md` ("Phase 3, Arc box"). B1: median NSE +0.914, AMAX bias
+−6.6%, top-1% NSE +0.201, beats the nowcast tree on 80% of catchments —
+donors and normalisation are additive; best point model in the project.
+B2: AMAX-day q99 coverage 0.892 (vs 0.847 without donors; tree ladder +
+donors 0.896) — the envelope gain from donors is the same in both model
+classes and both leave the same ~10% of annual maxima unflagged; q50 AMAX
+bias −15.0% vs the mean head's −6.6% (q50-vs-mean replicates a 4th time).
+
 **CPU box queue** (one at a time):
 
 - C1 **Tree quantile ladder + donors** (~40 min, `hgb_quantiles_nowcast.py`):

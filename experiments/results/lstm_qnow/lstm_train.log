@@ -1,0 +1,23 @@
+device: xpu
+loading 416 basins...
+donor features: 3 nearest gauges (2x3 columns per basin)
+windows: 5,429,158 train / 454,550 val / 1,819,212 test
+epoch 0: loss 0.0725  val NSE(norm) +0.832  311s
+epoch 1: loss 0.0552  val NSE(norm) +0.836  309s
+epoch 2: loss 0.0512  val NSE(norm) +0.854  308s
+epoch 3: loss 0.0484  val NSE(norm) +0.854  375s
+epoch 4: loss 0.0469  val NSE(norm) +0.865  384s
+epoch 5: loss 0.0458  val NSE(norm) +0.855  430s
+epoch 6: loss 0.0449  val NSE(norm) +0.866  465s
+epoch 7: loss 0.0443  val NSE(norm) +0.882  336s
+epoch 8: loss 0.0435  val NSE(norm) +0.879  277s
+epoch 9: loss 0.0428  val NSE(norm) +0.871  277s
+epoch 10: loss 0.0425  val NSE(norm) +0.872  298s
+epoch 11: loss 0.0422  val NSE(norm) +0.864  350s
+epoch 12: loss 0.0420  val NSE(norm) +0.884  346s
+epoch 13: loss 0.0415  val NSE(norm) +0.869  345s
+epoch 14: loss 0.0414  val NSE(norm) +0.884  349s
+epoch 15: loss 0.0409  val NSE(norm) +0.880  345s
+test inference...
+wrote experiments\results\lstm_qnow\lstm_test_predictions.parquet (1,819,212 rows)
+score it back on the main machine with experiments/evaluate.py
