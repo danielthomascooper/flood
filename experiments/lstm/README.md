@@ -190,3 +190,34 @@ pooled and per-catchment (p10 0.966) but misses 15% of annual maxima and
 13% of top-1% days; (c) the lower half of the ladder is biased low
 (q25 covers 0.185, q50 0.444) while the upper half is on target, so the
 model's spread is right but its centre is low on ordinary days too.
+
+**A3 horizon test, `--seq 730`** (8 ep, seed 0; `results/lstm_seq730/`).
+Card: median NSE +0.857, KGE +0.835 (best of any run on both), AMAX bias
+−20.8%, top-1% NSE −0.560. Paired seq730 − seq365 at equal epochs:
+**+0.002 all, +0.013 chalk, +0.017 weak-tree**, 730 better on 55% of
+catchments — inside the seed spread (±0.005). The 90→365 step was worth
++0.057 on chalk; 365→730 is worth nothing measurable.
+
+### Gate 1 verdict (Arc side; full table `results/gate1_memory_vs_normalisation.csv`)
+
+| paired NSE gain vs raw tree | weak-tree (35) | chalk (23) |
+|---|---|---|
+| tree `norm` (C1) | +0.185 | +0.051 |
+| tree `log1p` (C1) | +0.268 | +0.079 |
+| lstm seq 90 | +0.372 | +0.046 |
+| lstm seq 365 (8 ep) | +0.426 | +0.098 |
+| lstm seq 730 | +0.458 | +0.097 |
+| lstm seq 365 (16 ep) | +0.457 | +0.122 |
+
+- The weak-catchment rescue is **loss scaling**: the tree's `log1p`
+  recovers 74% of it (C1) and the LSTM keeps 87% of it with only 90 days
+  of input (A1). What remains over `log1p` (~+0.1–0.2 on weak catchments)
+  is the LSTM being a better function of the same inputs, not memory.
+- Chalk has a real but small horizon component in the **90–365-day**
+  range (+0.05), which the tree's `log1p` transform already captures most
+  of (+0.079 vs +0.098). Nothing beyond 365 days (A3).
+- "Memory beyond the tree's rolling windows" is dead; the cell-state vs
+  groundwater-well probe is not worth building on this evidence. The
+  honest chalk claim is: *per-basin loss normalisation plus a 365-day
+  window fixes the chalk failure; the tree gets most of the way there
+  with `log1p`.*
