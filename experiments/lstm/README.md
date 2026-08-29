@@ -80,3 +80,46 @@ The numbers to beat, from `experiments/results/`: median NSE +0.820
 question is not the headline NSE but whether learned state narrows the
 flood-day gap the tree could not: top-1% NSE and AMAX bias are the columns
 to watch.
+
+## Results so far (Arc Pro 140T, 2026-08-28/29)
+
+All runs: hidden 128, batch 256, 1500 batches/epoch, lr 1e-3. Cards from
+`experiments/evaluate.py`, collected in `results/lstm_cards.csv`; each run's
+parquet, manifest, per-catchment metrics and training log sit in
+`results/lstm_<run>/` (the 8-epoch seed-0 baseline is in `results/` itself).
+
+| model | median NSE | %NSE<0 | top-1% NSE | top-1% bias | AMAX bias | q99 bias | coverage |
+|---|---|---|---|---|---|---|---|
+| tree (hgb raw) | +0.820 | 2.6 | −0.811 | −23.9% | −17.4% | −11.5% | 0.560 |
+| lstm 8 ep, seed 0 | +0.852 | 0.0 | −0.630 | −25.1% | −19.4% | −14.5% | 0.563 |
+| lstm 16 ep, seed 0 | **+0.855** | 0.0 | −0.572 | −23.9% | −19.2% | −14.2% | 0.553 |
+| lstm 8 ep, seed 1 | +0.847 | 0.0 | −0.730 | −25.9% | −21.6% | −16.1% | 0.580 |
+| lstm 8 ep, seed 0, `--tail-weight 1` | +0.840 | 0.0 | **−0.521** | −24.3% | −19.5% | −12.6% | 0.635 |
+
+Val NSE(norm) per epoch is in each `lstm_train.log` (seed 0: +0.74 after
+one epoch, +0.82 at 8, +0.83 at 16). ~5.5 min/epoch and ~5 min test
+inference when the GPU is not shared; three runs in parallel each take ~3x
+longer, so there is no throughput gain from overlapping them.
+
+What it says:
+
+- **Ordinary days: LSTM wins, robustly.** +0.03 median NSE over the tree and
+  no failed catchments, reproduced across seeds (±0.005).
+- **Flood peaks: no better than the tree.** AMAX bias −19 to −22% vs the
+  tree's −17%; seed-to-seed spread on the tail metrics (~2 points of AMAX
+  bias, ~0.1 of top-1% NSE) is as large as the LSTM–tree gap, so treat the
+  two as tied there. Learned state fixes ordinary-day dynamics, not the
+  systematic peak under-prediction.
+- **More epochs help a little** everywhere (16 ep is best on every column
+  except coverage) and the val curve was still creeping up; worth 32 if
+  the LSTM is pursued.
+- **Tail weighting (α=1) moves the wrong knob:** best top-1% NSE and q99
+  bias of any model, but AMAX bias unchanged, median NSE −0.012 and coverage
+  up to 0.635 — it inflates moderately high days rather than the annual
+  peaks. A steeper weight, or weighting AMAX days specifically, would be
+  the next test, at further ordinary-day cost.
+
+`--tail-weight ALPHA` weights each sample's squared error by
+`1 + ALPHA * max(y_norm, 0)` (normalised by the weight sum); 0 = plain MSE.
+To extend a finished run, copy its `lstm_checkpoint.pt` into a new `--out`
+directory and rerun with a larger `--epochs`; the script resumes from it.

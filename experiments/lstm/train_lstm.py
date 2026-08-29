@@ -96,6 +96,9 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--tail-weight", type=float, default=0.0,
+                    help="alpha in per-sample MSE weight 1 + alpha*max(y_norm, 0); "
+                         "0 = plain MSE. Upweights high-flow days.")
     args = ap.parse_args()
 
     torch.manual_seed(args.seed)
@@ -144,7 +147,12 @@ def main():
 
     model = LSTMModel(len(FORCINGS) + s_z.shape[1], args.hidden).to(dev)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
-    lossf = nn.MSELoss()
+    def lossf(pred, y):
+        se = (pred - y) ** 2
+        if args.tail_weight > 0:
+            w = 1 + args.tail_weight * torch.clamp(y, min=0)
+            return (w * se).sum() / w.sum()
+        return se.mean()
     ckpt = out / "lstm_checkpoint.pt"
     start_ep = 0
     if ckpt.exists():

@@ -1,0 +1,14 @@
+device: xpu
+loading 416 basins...
+windows: 5,429,158 train / 454,550 val / 1,819,212 test
+epoch 0: loss 1.2576  val NSE(norm) +0.712  1010s
+epoch 1: loss 1.0488  val NSE(norm) +0.761  985s
+epoch 2: loss 0.7404  val NSE(norm) +0.728  960s
+epoch 3: loss 0.7184  val NSE(norm) +0.785  911s
+epoch 4: loss 0.6737  val NSE(norm) +0.797  884s
+epoch 5: loss 0.6353  val NSE(norm) +0.778  894s
+epoch 6: loss 0.6550  val NSE(norm) +0.798  890s
+epoch 7: loss 0.6686  val NSE(norm) +0.807  900s
+test inference...
+wrote experiments\results\lstm_tail1\lstm_test_predictions.parquet (1,819,212 rows)
+score it back on the main machine with experiments/evaluate.py
