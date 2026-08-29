@@ -227,6 +227,39 @@ Shared donor code now lives in `experiments/nowcast_common.py`.
   the C3 CSVs: best event anatomy across the board (matched-peak 0.855,
   5-day volume 0.927), bankfull POD 0.797 (LSTM keeps best CSI 0.691).
 
+### Phase 4 (2026-08-29 eve): the last frontier + the write-up
+
+The missing ~10% is now characterised (`analysis_missed_amax.py`):
+tree and LSTM ladders each miss ~10.4/10.8% of AMAX days but only 44%
+of those events overlap — 225 events (4.5%) are missed by BOTH, summer
+2× over-represented, and 55% of them have same-day rain below its own
+q90: invisible in daily rainfall by construction. (Corollary: a
+max-of-both-envelopes union already covers ~95.5% of AMAX days.)
+
+**Arc box queue — the hourly pilot** (pull first):
+
+- A0 **Transfer** (~3.1 GB): 198 hourly files (60 pilot catchments =
+  48 most-missed + 12 zero-miss controls, plus each target's 3 donors):
+  `rsync -a --files-from=experiments/results/hourly_pilot_files.txt main-machine:~/source/flood/data/Catchment_Timeseries/hydro-meteorological/hourly/ ./data/Catchment_Timeseries/hydro-meteorological/hourly/`
+- A1 **Hourly LSTM, mse head** (~10 epochs; expect slower epochs than
+  daily): `python experiments/lstm/train_lstm_hourly.py --out experiments/results/lstm_hourly`
+  Hourly rain = gradgb.fillna(cehgear) — **hourly forcing trap**: cehgear
+  dies ~2017-19, gradgb starts ~2006-08, neither spans both windows.
+  336-hour windows, hourly donor flows (same-hour + 24h lag), per-basin
+  normalisation, same split boundary.
+- A2 **Hourly quantile head**:
+  `python experiments/lstm/train_lstm_hourly.py --head quantile --out experiments/results/lstm_hourly_q`
+- Commit each run's parquets (hourly + the daily-mean aggregation the
+  script writes) + manifest + log; push. UTF-8 only.
+- Scoring happens on the main machine: daily-agg card vs the daily
+  models on the same 60 catchments; hourly AMAX capture; and the named
+  225 both-missed events (`results/missed_amax_events.csv`) — the pilot
+  succeeds if the hourly model's envelope covers a material share of
+  exactly those events.
+
+**CPU box / this machine:** the rigorous write-up of all findings as an
+artifact (in progress), plus scoring the pilot when it returns.
+
 ### Next big build (chosen by Gate 2)
 
 The residual is information at the daily scale: both model classes'
