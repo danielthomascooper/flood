@@ -160,3 +160,33 @@ same horizon than the tree's `p_sum180/365` do. Card-wise the 90-day model
 is still ahead of the tree (median NSE +0.840, no failed catchments) with
 the same peak under-prediction (AMAX bias −19.8%). A3 (`--seq 730`) is
 queued to test whether horizon beyond 365 days adds anything for chalk.
+
+**A2 quantile head, `--head quantile --epochs 16`** (seed 0;
+`results/lstm_q/`, cards `results/lstm_q_cards.csv`, calibration
+`results/lstm_q_calibration.csv`). Joint monotone pinball ladder
+q05/q25/q50/q75/q95/q99; zero crossing rows (the tree sweep had 28.6%).
+Trains as easily as the MSE head (q50 val NSE(norm) +0.750 after one epoch,
++0.835 peak, +0.831 final).
+
+| point forecast | median NSE | top-1% NSE | AMAX bias | coverage |
+|---|---|---|---|---|
+| tree mean | +0.820 | −0.811 | −17.4% | 0.560 |
+| lstm mse (16 ep) | +0.855 | −0.572 | −19.2% | 0.553 |
+| lstm q50 | **+0.858** | −0.672 | −23.5% | 0.456 |
+| lstm q95 as point | +0.643 | −0.505 | +22.0% | 0.954 |
+
+Calibration (fraction of obs ≤ quantile), nominal → pooled / per-catchment
+median / **AMAX days**: q50 0.50 → 0.444 / 0.456 / 0.08; q95 0.95 →
+0.935 / 0.954 / 0.63; q99 0.99 → 0.985 / 0.992 / **0.85**. Median
+interval widths 0.22 mm/day (50%) and 0.54 (90%) vs the tree sweep's
+0.24 / 0.64 — sharper at the same pooled calibration. On AMAX days q99
+sits at a median 1.31× obs and q50 at 0.68× obs.
+
+Reading for Gate 2: (a) the median is a worse flood point forecast than
+the mean, as it was for the tree (−23.5% vs −19.2% AMAX bias) — the
+statistic, not the model family, drives peak bias; (b) pooled calibration
+hides flood-day miscalibration exactly as suspected — q99 is nominal
+pooled and per-catchment (p10 0.966) but misses 15% of annual maxima and
+13% of top-1% days; (c) the lower half of the ladder is biased low
+(q25 covers 0.185, q50 0.444) while the upper half is on target, so the
+model's spread is right but its centre is low on ordinary days too.
