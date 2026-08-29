@@ -96,14 +96,55 @@ Windows/macOS (71153d0).
   0–4 of the stratified fold → a distribution on the 0.026 ungauged
   penalty instead of one number.
 
-### Decision gates
+### Decision gates — CLOSED 2026-08-29, all Phase 2 experiments done
 
-- **Gate 1** = C1 + A1: memory-vs-normalisation verdict. Decides whether
-  the cell-state-vs-wells probe (the genuinely novel paper section) is
-  worth building, and what correction the artifact needs.
-- **Gate 2** = C2 + C3 + A2: statistic-vs-information-vs-observation
-  verdict on peaks. Chooses between the hourly pilot and neighbour-gauge
-  nowcasting as the next big build.
+- **Gate 1 verdict: normalisation, plus a small within-year chalk
+  component.** Tree log1p recovers 74% of the LSTM's weak-catchment gain
+  (C1); a 90-day window keeps 87% of it while chalk halves (A1: 90→365
+  days adds +0.057 median NSE on chalk, 91% improving, vs +0.004
+  elsewhere); 730 days adds nothing anywhere (A3). "Multi-year aquifer
+  memory" is dead; "months 4–12 matter on chalk" is the surviving,
+  properly controlled residue. The cell-state-vs-wells probe is still
+  defensible but the effect it would explain is ~0.06 NSE on 23
+  catchments, not the headline.
+- **Gate 2 verdict: primarily statistic + information; observation
+  secondary.** Statistic: q50-as-point under-predicts peaks for tree and
+  LSTM alike (A2 replicates the tree result). Information: even
+  calibrated quantile envelopes miss AMAX days at the same rate for both
+  model classes — tree q99 covers 82.9% (C2), LSTM q99 84.7% (A2), both
+  nominal 99% — so on ~15% of annual maxima the forcings do not flag the
+  day as extreme; a better representation did not fix it. Observation:
+  real but not dominant — no AMAX-bias gradient across rating-uncertainty
+  quartiles, median rating half-width ±10.6% (≈ half the bias), 178/416
+  test AMAX beyond the largest gauged flow, and daily averaging clips
+  instantaneous peaks ~20% (C3b + cache audit).
+- **C4 (fold rotation): the 0.026 penalty was the median hiding the
+  story.** All 416 catchments held out once: median +0.030 (folds
+  +0.026…+0.046) but mean +0.283, q90 +0.303, ungauged failures 25 vs 11
+  gauged. Chalk penalty +0.097 vs non-chalk +0.027 — and the worst
+  ungauged failures (Law Brook, Ver, Mimram, Burn, Pang…) are classic
+  chalk streams sitting *below* the frac_high_perc≥50 flag: the binary
+  chalk definition under-counts groundwater-dominated catchments.
+  `results/spatial_folds_per_catchment.csv`.
+- **Cheap tail win from C3c:** the 4-member ensemble upper member gets
+  AMAX bias −14.3% and top-1% NSE −0.29, the best tail numbers of any
+  model, for free. Bankfull threshold skill (C3d): LSTM CSI 0.691, FAR
+  0.14 — as an alarm the models beat what amplitude metrics suggest.
+
+### Next big build (chosen by Gate 2)
+
+The residual is information at the daily scale: both model classes'
+envelopes miss the same ~15% of AMAX days. The two candidate attacks:
+**neighbour-gauge nowcasting** (same-day observed flow at nearby gauges —
+directly observes the flood wave the forcings miss; also exactly what an
+ungauged site lacks, tying into C4's chalk-penalty finding) and the
+**hourly pilot** (tests whether sub-daily rain intensity is the missing
+signal and how much daily averaging understates true peaks). Nowcasting
+is the cheaper first step (tree fits on cache/daily_discharge_spec.parquet
+features, CPU-only); hourly is the deeper one (~GPU-day + 10 GB
+transfer). Also on the table: seed-ensemble upper member as a standing
+cheap baseline for any tail claim, and the wells cell-state probe scoped
+to the (now smaller) chalk question.
 
 ## Immediate actions for the next session
 
