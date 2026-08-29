@@ -70,16 +70,19 @@ def load_basins(gauges):
 class Windows(torch.utils.data.Dataset):
     """(basin, t) pairs; __getitem__ slices the 365-day window ending at t."""
 
-    def __init__(self, X, Y, S, index):
+    def __init__(self, X, Y, S, index, seq=SEQ):
         self.X, self.Y, self.S, self.index = X, Y, S, index
+        self.seq = seq  # carried on the instance: spawned DataLoader workers
+                        # (Windows/macOS) re-import this module and would
+                        # otherwise see the default SEQ, not --seq
 
     def __len__(self):
         return len(self.index)
 
     def __getitem__(self, i):
         b, t = self.index[i]
-        x = self.X[b][t - SEQ + 1:t + 1]                      # (365, n_forcing)
-        s = np.broadcast_to(self.S[b], (SEQ, self.S[b].shape[0]))
+        x = self.X[b][t - self.seq + 1:t + 1]                 # (seq, n_forcing)
+        s = np.broadcast_to(self.S[b], (self.seq, self.S[b].shape[0]))
         return np.concatenate([x, s], axis=1), self.Y[b][t], b
 
 
@@ -189,7 +192,7 @@ def main():
     def run_eval(index, sample=50_000):
         idx = [index[i] for i in rng.choice(len(index),
                                             min(sample, len(index)), replace=False)]
-        dl = torch.utils.data.DataLoader(Windows(X, Y, S, idx), batch_size=1024,
+        dl = torch.utils.data.DataLoader(Windows(X, Y, S, idx, SEQ), batch_size=1024,
                                          num_workers=args.workers)
         model.eval(); preds, obs = [], []
         with torch.no_grad():
@@ -199,7 +202,7 @@ def main():
         p, o = np.concatenate(preds), np.concatenate(obs)
         return 1 - ((o - p) ** 2).sum() / ((o - o.mean()) ** 2).sum()
 
-    tr_ds = Windows(X, Y, S, tr_index)
+    tr_ds = Windows(X, Y, S, tr_index, SEQ)
     for ep in range(start_ep, args.epochs):
         sampler = torch.utils.data.RandomSampler(
             tr_ds, replacement=True, num_samples=args.steps * args.batch)
@@ -221,7 +224,7 @@ def main():
 
     # --- full test inference, harness format ---------------------------------
     print("test inference...", flush=True)
-    dl = torch.utils.data.DataLoader(Windows(X, Y, S, te_index), batch_size=1024,
+    dl = torch.utils.data.DataLoader(Windows(X, Y, S, te_index, SEQ), batch_size=1024,
                                      num_workers=args.workers)
     model.eval(); preds = []
     with torch.no_grad():
