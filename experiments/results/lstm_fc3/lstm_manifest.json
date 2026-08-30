@@ -1,0 +1,20 @@
+{
+  "out": "experiments\\results\\lstm_fc3",
+  "epochs": 16,
+  "steps": 1500,
+  "batch": 256,
+  "hidden": 128,
+  "lr": 0.001,
+  "workers": 2,
+  "seed": 0,
+  "seq": 365,
+  "head": "mse",
+  "tail_weight": 0.0,
+  "donors": 3,
+  "lead": 3,
+  "autoreg": true,
+  "device": "xpu",
+  "n_basins": 416,
+  "train_end": "2010-09-30",
+  "test_start": "2010-10-01"
+}

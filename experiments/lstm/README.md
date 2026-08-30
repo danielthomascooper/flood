@@ -451,20 +451,26 @@ question is timing and flood-day skill (top-1% NSE), not bias.
 epoch, +0.764 peak, +0.759 final — ~0.12 below the lead-0 nowcast, the
 price of the day of lead.
 
-| lead 1, 416 catchments | persistence | F1 |
-|---|---|---|
-| median NSE / KGE | +0.538 / +0.769 | **+0.811 / +0.820** |
-| % catchments NSE<0 | 2.6 | 0 |
-| top-1% NSE | −3.25 | −1.51 |
-| top-1% bias | −37.7% | −32.1% |
-| AMAX bias | 0.0% (by construction) | −17.4% |
-| pred max, mm/day (obs 244) | 244 | 93 |
-| paired vs persistence | — | +0.253 median, better on 94% |
-| bias on the observed AMAX day | −100% + a day-late peak | −34.3% |
-| model's own AMAX within ±1 day of obs | — | 52.2% (median lag 0) |
+| lead 1, 416 catchments | persistence | tree, own flow + donors (CPU box C1) | F1 |
+|---|---|---|---|
+| median NSE / KGE | +0.538 / +0.769 | +0.778 / — | **+0.811 / +0.820** |
+| % catchments NSE<0 | 2.6 | — | 0 |
+| top-1% NSE | −3.25 | −2.15 | −1.51 |
+| top-1% bias | −37.7% | — | −32.1% |
+| AMAX bias | 0.0% (by construction) | −18.9% | −17.4% |
+| pred max, mm/day (obs 244) | 244 | — | 93 |
+| paired vs persistence | — | — | +0.253 median, better on 94% |
+| bias on the observed AMAX day | −54% (the day before's flow) | −40% | −34.3% |
+| own AMAX within ±1 day of obs | 100% (by construction) | 50% | 52.2% (median lag 0) |
+
+Tree numbers are the CPU box's `hgb_forecast.py` ar_donor row (PLAN.md,
+Phase 6 CPU results); its perfect-rainfall ceiling (actual rain on t+1 as
+an input) reaches +0.859 / peak-day −28%, so the forecast problem is
+rain-forecast-bound, not model-bound, above about +0.81.
 
 Reading: a day ahead, own flow + donors + forcings recover essentially the
-tree's *simulation* skill on ordinary days (+0.811 vs +0.820) and beat
+tree's *simulation* skill on ordinary days (+0.811 vs +0.820), beat the tree
+forecaster by the same +0.03 the LSTM held in simulation, and beat
 persistence almost everywhere. On flood days the forecaster looks like the
 raw daily tree: −17% AMAX bias and a 93 mm/day ceiling. Persistence's
 0% AMAX bias is not skill — it is the peak arriving a day late — so the
@@ -490,7 +496,7 @@ ceiling as F1, reached the same way. 0 crossing rows in the ladder.
 | AMAX bias | 0.0% | −17.4% | −19.8% |
 | pred max, mm/day (obs 244) | 244 | 93 | 84 |
 | paired vs persistence | — | +0.253, better on 94.0% | +0.248, better on 95.7% |
-| bias on the observed AMAX day | — | −34.3% | −35.2% |
+| bias on the observed AMAX day | −54% | −34.3% | −35.2% |
 | own AMAX within ±1 day of obs | — | 52.2% | 55.1% |
 
 Calibration, fraction of obs ≤ quantile (pooled / per-catchment median /
@@ -525,3 +531,33 @@ the day before a flood is still a 1.4× the-peak-will-be-here envelope
 that is right four years in five, which is the operational number the
 CPU box's C2 scoring should weigh against persistence's (by construction
 exact) 0% bias delivered a day late.
+
+**F3 3-day-ahead LSTM, `--lead 3 --autoreg --donors 3 --epochs 16`**
+(`results/lstm_fc3/`; same card and paired CSVs). Val NSE(norm) +0.377 after
+one epoch and +0.367–0.392 for the remaining fifteen — a flat line: at
+three days of lead the network learns everything it can from the first
+pass and there is nothing left to fit.
+
+| lead 3, 416 catchments | persistence | tree, own flow + donors (CPU box C1) | F3 |
+|---|---|---|---|
+| median NSE / KGE | +0.077 / +0.539 | +0.390 / — | **+0.388 / +0.477** |
+| % catchments NSE<0 | 43.0 | — | 0 |
+| top-1% NSE | −6.06 | −6.6 | −6.40 |
+| top-1% bias | −62.3% | — | −71.1% |
+| AMAX bias | 0.0% (by construction) | −54% | −54.0% |
+| pred max, mm/day (obs 244) | 244 | — | 28 |
+| paired vs persistence | — | — | +0.314 median, better on 94.7% |
+| bias on the observed AMAX day | −77% (flow three days before) | −77% | −76.1% |
+| own AMAX within ±1 day of obs | 100% (by construction) | 3% | 4.9% (median lag +2 d) |
+
+Reading: three days out the LSTM and the tree are the same model — +0.388
+vs +0.390 on ordinary days, −54% on annual peaks, −76/−77% on the peak
+day, own maximum landing two days late. Both keep ordinary-day skill
+(recession is predictable, so no catchment goes negative where persistence
+loses 43%), and both are blind to floods: a forecast issued three days
+before the annual peak carries a quarter of it, and the top-1% NSE is
+*worse* than persistence (−6.4 vs −6.1) because the model under-calls
+the peak rather than merely mistiming it. F1 → F3 loses 0.42 of median
+NSE and 0.47 of AMAX-timing hit rate for two extra days of lead, on the
+same inputs; the CPU box's perfect-rain ceiling says where that skill
+went. Rain forecasts, not model class, are the lead-3 constraint.
