@@ -335,11 +335,24 @@ CORRECT. Claims change as follows:
   the 1.42× daily-clipping measurement, the missed-event anatomy, the
   bankfull threshold-skill reframe, and the fold-rotation heavy-tail
   finding.
-- Still required before the paper: Arc H1/H2 (seed replication of every
-  tail headline — single-seed sign claims like top-1% +0.201 are
-  exactly what a second seed can flip), H3 (hourly deconfound), **H4
-  (NEW): a second hourly seed**, and ideally a held-back sub-window
-  (last 4 water years) rescoring of the final models only.
+- **Arc hardening DONE (H1–H4), verified on this machine:**
+  * Seed replication of LSTM+donors: median NSE +0.910 (0.906–0.914) —
+    robust; top-1% NSE +0.136 (0.085–0.201) — positive on every seed,
+    the sign claim survives; **AMAX bias −10.1% mean (−6.6 / −11.8 /
+    −11.8) — seed 0 was the optimistic outlier and the advantage over
+    the nowcast tree (−9.0%) is NOT robust: a tie.** Retract "−6.6%,
+    inside rating uncertainty". Val curves peak at ep 10–11 (+0.88),
+    consistent with the fixed 16-epoch budget. Defensible headline model
+    = the 3-seed prediction mean (+0.917 / +0.185 / −10.1%).
+  * Hourly deconfound (`--donors 0`): rain-only recovers the same share
+    of the 145 missed events as with donors (75.2% vs 76.6%,
+    own-comparator; second hourly seed 75.2%) at lower sharpness; donors
+    buy point skill (q50 daily-agg NSE +0.88 vs +0.77, ~40× the seed
+    spread). **Event recovery is hourly rainfall; donors are point
+    skill.** Exactly what the missed-event anatomy (55% sub-q90 daily
+    rain) predicted. `results/hourly_deconfound.csv`.
+  * Still optional: a held-back sub-window (last 4 water years)
+    rescoring of the final models only.
 
 ### Phase 5 (2026-08-30): hardening + adversarial review
 
