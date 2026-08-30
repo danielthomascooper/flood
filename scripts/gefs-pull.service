@@ -1,0 +1,14 @@
+[Unit]
+Description=GEFS v12 precipitation pull (resume-safe)
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/habrt/source/flood/scripts/gefs_pull.sh
+Restart=on-failure
+RestartSec=120
+StandardOutput=append:/home/habrt/source/flood/cache/nwp/gefs_pull.log
+StandardError=append:/home/habrt/source/flood/cache/nwp/gefs_pull.log
+
+[Install]
+WantedBy=default.target
