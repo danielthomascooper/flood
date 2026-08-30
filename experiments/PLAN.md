@@ -1,3 +1,67 @@
+# CAMELS-GB flood modelling — what we know (consolidated 2026-08-30)
+
+Every number below is seed-replicated, control-validated, or explicitly
+caveated; the two adversarial reviews' corrections are already applied.
+Write-ups: `docs/where_the_floods_went.html` (findings),
+`docs/floods_in_plain_words.html` (primer + definitions),
+`docs/trees_on_the_hydrograph.html` (original essay, corrected twice).
+
+**Setting.** CAMELS-GB v2, 416 catchments (≥95% complete), train
+1970–2010 / test 2010–2022, HadUK-Grid + Hydro-PE forcings, no
+discharge-derived features. Every model reports the same card: median
+NSE/KGE, top-1% NSE, AMAX bias, q99 distribution bias, coverage.
+
+**Standing results.**
+1. Tree baseline +0.820 NSE but AMAX bias −17.4%, top-1% NSE −0.81,
+   never predicts above 93 mm/d (obs max 244). Not a tuning artifact.
+2. Point statistics vs distributions: mean-regression targets cannot fix
+   the tail (log1p worse; q99/mean = 1.89× on flood days); the median of
+   a calibrated ladder is a worse point forecast for peaks than the mean
+   (4 replications — arithmetic of right skew, not a discovery).
+3. Pooled ladder calibration is nominal (q99 0.983) but AMAX-day coverage
+   is 0.83 (no donors) / 0.90 (donors). **Oracle:** a perfectly calibrated
+   q99 of this sharpness covers only ~0.88 of AMAX days (selection on the
+   realisation), so 0.90 is at the ceiling of the daily feature set. Say
+   "exhausts the daily feature set", never "limit is in the data".
+   Date-clustered 95% CI on coverage: [0.883, 0.907].
+4. LSTM (+0.855) beats the tree mostly via per-basin loss normalisation
+   (tree log1p recovers 74%; 90-day window keeps 87%); a small chalk-only
+   90–365-day component (+0.057) survives; 730 days adds nothing. The
+   published "multi-year aquifer memory" claim was wrong and corrected.
+5. Nearest-well groundwater covariates: null (shuffled control matches).
+6. Neighbour-gauge nowcasting (same-day + lag-1 flow at 3 nearest gauges):
+   tree +0.882, top-1% −0.10, AMAX −9.0%; shuffled donors flat; survives
+   dropping the nearest donor (88%); flat in distance to 43 km. **Zero
+   lead time** (lag-1 keeps 14%); zero-parameter donor floor NSE 0.715.
+7. LSTM + donors, 3 seeds: median NSE +0.910 (0.906–0.914), top-1% NSE
+   +0.136 (0.085–0.201, positive every seed), AMAX −10.1% (ties the donor
+   tree). Seed 0 (−6.6%) was the outlier.
+8. Ungauged (5 rotated folds): median penalty +0.030 but heavy-tailed
+   (mean +0.283, chalk +0.097). With donors on both sides the penalty is
+   +0.048 (chalk +0.132) — NOT closed; ungauged-with-donors matches
+   gauged-without. Geology-similar donors halve chalk penalty (+0.047).
+9. Missed events: the two donor ladders each miss ~10% of AMAX days, only
+   44% overlapping; 225 missed by both — summer 2×, 55% with same-day
+   rain ≤ its q90. Hourly pilot (60 outcome-selected catchments, 2 seeds):
+   recovers 64% (±1 d, same comparator) vs a 25% diversity baseline;
+   width-null 4.1%; rain-only recovers the same share → **the recovery is
+   hourly rainfall; donors are point skill**.
+10. Observation floor: rating half-width ±10.6% at q99; 178/416 test AMAX
+    beyond the largest gauged flow; daily means understate hourly peaks
+    (median 1.42×). Bankfull alarm skill: LSTM CSI 0.69, nowcast POD 0.80.
+
+**What no model here does: forecast.** All are simulations/nowcasts
+(inputs complete only at end of day t). Own-flow autoregression was
+deliberately withheld. Phase 6 below opens that question.
+
+**Traps.** cehgear/chess daily columns end 2019; hourly cehgear ends
+~2017–19 and gradgb starts ~2006–08 (blend); hourly discharge is mm/h
+(daily mm/day); /tmp scratch dies on reboot — persist to results/;
+11 GB RAM — one experiment at a time, `setsid nohup` for long runs;
+Arc box must write UTF-8.
+
+---
+
 # Session handoff (2026-08-28, updated evening)
 
 Written mid-session because the harness's permission classifier went down

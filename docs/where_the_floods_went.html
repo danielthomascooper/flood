@@ -1,0 +1,565 @@
+<title>Where the Floods Went</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root {
+  color-scheme: light;
+  --paper:      #eef1ee;
+  --panel:      #f7f9f7;
+  --ink:        #101c1a;
+  --ink-2:      #3e4f4c;
+  --muted:      #6e7c79;
+  --rule:       #d1d9d5;
+  --rule-soft:  #e0e6e2;
+  --accent:     #0b6b72;
+  --accent-soft:#d9e8e8;
+  --warn:       #9d4a1c;
+  --warn-soft:  #f0e2d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper:      #0d1413;
+    --panel:      #141d1c;
+    --ink:        #e9efec;
+    --ink-2:      #b3c0bc;
+    --muted:      #7f8f8b;
+    --rule:       #263230;
+    --rule-soft:  #1c2726;
+    --accent:     #52aeb4;
+    --accent-soft:#12302f;
+    --warn:       #d5854c;
+    --warn-soft:  #2c2018;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper:      #0d1413;
+  --panel:      #141d1c;
+  --ink:        #e9efec;
+  --ink-2:      #b3c0bc;
+  --muted:      #7f8f8b;
+  --rule:       #263230;
+  --rule-soft:  #1c2726;
+  --accent:     #52aeb4;
+  --accent-soft:#12302f;
+  --warn:       #d5854c;
+  --warn-soft:  #2c2018;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 17px;
+  line-height: 1.62;
+  margin: 0;
+  padding: 0 clamp(16px, 5vw, 48px) 96px;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+.col  { max-width: 700px; }
+
+/* masthead */
+.masthead { padding: 64px 0 40px; border-bottom: 3px solid var(--ink); }
+.kicker {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin: 0 0 14px;
+}
+h1 {
+  font-family: "Zilla Slab", ui-serif, Georgia, serif;
+  font-size: clamp(38px, 6vw, 60px); font-weight: 700;
+  line-height: 1.04; margin: 0 0 18px; letter-spacing: -0.01em; text-wrap: balance;
+}
+.standfirst { font-size: 20px; line-height: 1.55; color: var(--ink-2); max-width: 720px; margin: 0 0 20px; }
+.dateline {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13px; color: var(--muted);
+}
+.dateline a { color: var(--accent); }
+
+/* sections */
+h2 {
+  font-family: "Zilla Slab", ui-serif, Georgia, serif;
+  font-size: 29px; font-weight: 600; line-height: 1.2;
+  margin: 64px 0 6px; text-wrap: balance;
+}
+h2 .no {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 15px; font-weight: 500; color: var(--accent);
+  display: block; margin-bottom: 6px; letter-spacing: .1em;
+}
+h3 {
+  font-family: "Zilla Slab", ui-serif, Georgia, serif;
+  font-size: 20px; font-weight: 600; margin: 36px 0 8px;
+}
+p { margin: 14px 0; max-width: 700px; }
+strong { font-weight: 600; }
+.mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; }
+a { color: var(--accent); }
+
+/* stat tiles */
+.stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0; }
+.stat {
+  flex: 1 1 150px; min-width: 150px;
+  background: var(--panel); border: 1px solid var(--rule);
+  border-top: 3px solid var(--accent);
+  padding: 14px 16px 12px;
+}
+.stat.bad { border-top-color: var(--warn); }
+.stat .label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px; line-height: 1.4;
+}
+.stat .value {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 27px; font-weight: 500; font-variant-numeric: tabular-nums;
+  line-height: 1.1; color: var(--ink);
+}
+.stat .value small { font-size: 15px; color: var(--muted); font-weight: 400; }
+.stat .delta { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; margin: 24px 0; }
+table {
+  border-collapse: collapse; width: 100%; min-width: 560px;
+  font-size: 14.5px; font-variant-numeric: tabular-nums;
+}
+caption {
+  text-align: left; font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); padding-bottom: 10px;
+}
+th {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px; font-weight: 500; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--muted);
+  text-align: right; padding: 7px 12px; border-bottom: 2px solid var(--ink);
+}
+th:first-child, td:first-child { text-align: left; padding-left: 0; }
+td {
+  padding: 8px 12px; text-align: right;
+  border-bottom: 1px solid var(--rule-soft);
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13.5px;
+}
+td:first-child { font-family: "Public Sans", sans-serif; font-size: 14.5px; }
+tr.hi td { background: var(--accent-soft); font-weight: 500; }
+td .up { color: var(--accent); font-weight: 500; }
+td .dn { color: var(--warn); }
+
+/* note blocks */
+.note {
+  background: var(--warn-soft); border-left: 3px solid var(--warn);
+  padding: 16px 20px; margin: 26px 0; max-width: 700px;
+}
+.note .tag {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--warn); font-weight: 500;
+}
+.note p { margin: 8px 0 0; }
+.aside {
+  background: var(--panel); border: 1px solid var(--rule);
+  padding: 16px 20px; margin: 26px 0; max-width: 700px; font-size: 15.5px;
+}
+.aside .tag {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500;
+}
+.aside p { margin: 8px 0 0; }
+
+/* verdict strip */
+.verdict {
+  border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule);
+  padding: 14px 0; margin: 30px 0; max-width: 700px; font-size: 16px;
+}
+.verdict .tag {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500; display: block; margin-bottom: 4px;
+}
+
+ul { max-width: 700px; padding-left: 22px; }
+li { margin: 7px 0; }
+li::marker { color: var(--accent); }
+
+.footer {
+  margin-top: 80px; padding-top: 20px; border-top: 3px solid var(--ink);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13px; color: var(--muted); line-height: 1.8;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .stat { transition: border-color .15s ease; }
+}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="kicker">CAMELS-GB v2 · 416 catchments · findings, verified</p>
+  <h1>Where the Floods Went</h1>
+  <p class="standfirst">A machine-learning model of British rivers can explain
+  82% of daily flow variance and still miss every flood by a fifth. This is the
+  record of finding out why — through four model families, three controlled
+  nulls, one public correction — of the two-line fix that was sitting in the
+  gauge network all along, and of the adversarial review that cut two of our
+  own headlines down to their honest size.</p>
+  <p class="dateline">2026-08-28 → 08-30 · companion to <em>Trees on the
+  Hydrograph</em> · every number below reproduces from
+  <span class="mono">experiments/</span> in the repo</p>
+</header>
+
+<section class="col">
+<h2><span class="no">§0</span>The setup, and the rules of evidence</h2>
+<p>All experiments run on CAMELS-GB v2: the 416 catchments with ≥95% complete
+daily flow records, trained on water years 1970–2010 and tested on a strictly
+later 2010–2022 hold-out. Forcings are HadUK-Grid rain and temperature with
+Hydro-PE PET; features are lags and rolling windows of these (a hand-built
+stand-in for catchment storage) plus 23 static attributes. Nothing derived from
+discharge is ever a feature.</p>
+<p>Every model reports the same card, built after the first experiment showed
+that headline skill scores hide everything flood work cares about: whole-record
+NSE and KGE, then separately the flood tail — NSE within each catchment's top
+1% of flows, bias on annual maxima (AMAX, the number flood-frequency analysis
+is fitted to), and behaviour on days exceeding the training-period maximum.</p>
+<p>Three rules of evidence held throughout, and each ended up mattering:
+every claimed mechanism gets a <strong>shuffled or ablated control</strong>;
+every headline number gets checked <strong>conditionally</strong>, not just in
+aggregate; and every interpretation survives, or does not survive, an
+<strong>adversarial audit</strong> against the recorded artifacts.</p>
+</section>
+
+<section class="col">
+<h2><span class="no">§1</span>One model, two scores</h2>
+<p>The gradient-boosted baseline is, by the usual measure, excellent — and, by
+the measure floods care about, broken. Same predictions, both true:</p>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="label">Median NSE, all days</div>
+    <div class="value">+0.820</div><div class="delta">no drift over 12 test years</div></div>
+  <div class="stat bad"><div class="label">NSE, top 1% of flows</div>
+    <div class="value">−0.811</div><div class="delta">worse than guessing the mean</div></div>
+  <div class="stat bad"><div class="label">Annual-maximum bias</div>
+    <div class="value">−17.4%</div><div class="delta">every flood a fifth short</div></div>
+  <div class="stat bad"><div class="label">Largest value ever predicted</div>
+    <div class="value">93 <small>mm/d</small></div><div class="delta">observed maximum: 244</div></div>
+</div>
+
+<section class="col">
+<p>The failure is structural, not a tuning artifact. Halving leaf sizes changes
+nothing; removing the memory features (lags, rolling sums) collapses overall
+skill to +0.35, so the features carry real storage information — they just
+cannot carry the peak.</p>
+</section>
+
+<section class="col">
+<h2><span class="no">§2</span>The conditional mean is the wrong statistic</h2>
+<p>Every mean-regression repair made the tail worse or left it alone. Training
+on <span class="mono">log1p(y)</span> — the standard advice — drops top-1% NSE
+from −0.81 to −0.94, because error in log space down-weights exactly the days
+that matter. Normalising by catchment rainfall is marginal. Only quantile
+regression at α&nbsp;=&nbsp;0.99 covers the extremes, and it does so by
+answering a different question: an envelope, not a forecast.</p>
+<p>The diagnosis underneath is the load-bearing fact of the whole project. On
+flood days, this model family's own 99th percentile runs at
+<strong>1.89× its mean prediction</strong>. The conditional distribution of
+tomorrow's flow, given everything a daily model can know, is that wide at the
+top — so <em>any</em> model reporting its central statistic under-predicts
+extremes by construction. No target transform can fix this, because it is not
+a defect of the model; it is a property of the question.</p>
+<p>The same experiment ran four times over the following days in different
+guises, and the pattern held every time: the median (q50) of a well-calibrated
+predictive distribution is a <em>worse</em> point forecast for peaks than the
+mean of the same feature set — by 13 points of AMAX bias in the last and best
+model. Distributions and point statistics must be chosen separately, on
+purpose.</p>
+</section>
+
+<section class="col">
+<h2><span class="no">§3</span>Calibration can be true in aggregate and false on the day that matters</h2>
+<p>The full quantile ladder (α = 0.05…0.99) looked like a solved problem:
+every level within ~1.5 points of nominal coverage over 1.8&nbsp;million test
+days, sharp central intervals, 90% of catchments holding q99 within two
+points. Then the same ladder was scored <em>only on annual-maximum days</em>:</p>
+</section>
+
+<div class="tbl-wrap"><table>
+<caption>Empirical coverage of the tree's quantile ladder, by conditioning (4,950 AMAX events)</caption>
+<tr><th>Nominal</th><th>All test days</th><th>AMAX days only</th></tr>
+<tr><td>q50</td><td>0.501</td><td><span class="dn">0.086</span></td></tr>
+<tr><td>q95</td><td>0.936</td><td><span class="dn">0.630</span></td></tr>
+<tr><td>q99</td><td>0.983</td><td><span class="dn">0.829</span></td></tr>
+</table></div>
+
+<section class="col">
+<p>A "calibrated" 99% envelope misses one annual maximum in six. Pooled
+calibration is dominated by ordinary days and says nothing about the days the
+envelope exists for; anyone deploying probabilistic flood bounds should score
+the events, not the record. One subtlety, found by adversarial review and then
+simulated: this is <em>not</em> a calibration defect, and 0.99 is not the
+right target. An annual maximum is selected on the realisation — it is
+preferentially an upper-tail draw of its own conditional distribution — so
+even a <em>perfectly calibrated</em> q99 of this ladder's sharpness would
+cover only ~0.88 of AMAX days (0.81–0.90 across tail assumptions). AMAX-day
+coverage measures the information content of the inputs, not the honesty of
+the quantiles. That reframing matters for everything below: a ladder sitting
+at its oracle ceiling has exhausted its feature set, and the only way up is
+more informative inputs.</p>
+<div class="note"><span class="tag">Correction · published claim</span>
+<p>The companion essay originally described the α=0.99 envelope as simply
+"calibrated" on the strength of the pooled number. That was true and
+insufficient; the conditional table above is the honest statement. The essay's
+§6 has been corrected once already (its original target-transform advice was
+falsified by §2's experiments); this is the second caveat the record needs.</p>
+</div>
+</section>
+
+<section class="col">
+<h2><span class="no">§4</span>The chalk story: a wrong mechanism, publicly corrected</h2>
+<p>A regional LSTM — one layer, per-basin normalised targets, the standard
+recipe — beat the tree overall (+0.855 vs +0.820) and, most strikingly,
+improved <em>every one</em> of the 23 chalk catchments, the
+groundwater-dominated rivers that published CAMELS-GB benchmarks report as the
+hardest class. We committed the obvious interpretation: hidden-state
+multi-year aquifer memory.</p>
+<p>An adversarial audit of our own evidence broke that claim within a day, on
+four counts:</p>
+<ul>
+<li>The trainer uses <strong>stateless 365-day windows</strong> — the same
+horizon as the tree's 365-day rolling rain sum. Multi-year memory was
+architecturally impossible all along.</li>
+<li>The gain was not chalk-specific: the LSTM rescued <em>all</em> weak-tree
+catchments (those below 0.6 NSE gained +0.45 median, four times the chalk
+gain), and the improvement tracked low flow variance, not geology
+(flow-variance-matched chalk residual, p ≈ 0.11).</li>
+<li>The five named "chalk failures" from the spatial experiment were not chalk
+by the project's own ≥50% definition (their high-productivity fractions run
+5.8–33).</li>
+<li>A named confound existed: per-basin target normalisation makes the LSTM's
+loss basin-NSE-like, while the tree's pooled MSE under-weights quiet
+catchments.</li>
+</ul>
+<p>The discriminating experiments then apportioned the gain exactly. Giving
+the <em>tree</em> a scale-free target (<span class="mono">log1p</span>)
+recovered 74% of the LSTM's weak-catchment gain. Shrinking the LSTM's window
+to 90 days kept 87% of that gain — but halved the chalk-specific part. And
+extending the window to 730 days added nothing anywhere.</p>
+<div class="verdict"><span class="tag">Verdict</span>
+The LSTM's celebrated win is mostly <strong>loss normalisation</strong> — an
+objective-function choice any model family can copy — plus one real, small,
+properly-controlled residue: on chalk, and only on chalk, months 4–12 of
+forcing history are worth about +0.06 NSE. "Multi-year aquifer memory" is
+dead; "a season of memory matters on chalk" survived its controls.</div>
+<div class="aside"><span class="tag">The null that rhymes</span>
+<p>Feeding each catchment its nearest observation well's level (z-scored on
+train-window statistics, 29 usable wells) changed nothing — and the control
+proved the nothing: a <em>shuffled</em> well assignment scored identically.
+Whatever regional wetness a well carries, a year of rainfall already encodes;
+single-well covariates cannot substitute for whatever storage signal is
+missing. Measured state is not automatically usable state.</p></div>
+</section>
+
+<section class="col">
+<h2><span class="no">§5</span>The flood wave is already measured</h2>
+<p>Closing the two gates left one diagnosis standing: on the days that matter,
+the <em>information</em> is missing from daily rainfall — the conditional
+distribution is wide because the forcings genuinely do not determine the peak.
+But a flood is not an unobserved event. It is water, moving through a gauged
+network, telemetered in real time. The neighbouring gauges <em>are</em> the
+missing measurement.</p>
+<p>Two features per neighbour — today's and yesterday's observed flow at the
+three nearest usable gauges (median 13.2 km away), each scaled by that donor's
+own high-flow level — and the picture changes more than everything else in the
+project combined:</p>
+</section>
+
+<div class="tbl-wrap"><table>
+<caption>The temporal split, before and after donor gauges — with the causal control</caption>
+<tr><th>Model</th><th>Median NSE</th><th>Top-1% NSE</th><th>AMAX bias</th></tr>
+<tr><td>Tree, forcings only</td><td>+0.820</td><td>−0.811</td><td>−17.4%</td></tr>
+<tr class="hi"><td>Tree + 3 donor gauges</td><td>+0.882</td><td>−0.099</td><td>−9.0%</td></tr>
+<tr><td>Tree + <em>shuffled</em> donors (control)</td><td>+0.820</td><td>−0.797</td><td>−17.2%</td></tr>
+</table></div>
+
+<section class="col">
+<p>The shuffled-donor control — every catchment given some other catchment's
+neighbours — moves <em>nothing</em>. The gain is the local flood wave being
+read off the network, not a regional wetness index. Event anatomy confirms it:
+with donors the model recovers 86% of the matched peak and 93% of five-day
+event volume, against 76% and 89% without.</p>
+<p>Three honesty clauses, each earned by a control. <em>Lead time:</em> the
+value is strictly contemporaneous — donors lagged by one day retain only 14%
+of the gain, so this is nowcasting, never forecasting; by the time the
+neighbours show the flood, the flood is happening. <em>Triviality floor:</em>
+a zero-parameter predictor (nearest donor's flow, rescaled) already achieves
++0.715 median NSE, so part of any donor model's skill is the spatial
+coherence of the flow field itself; the modelling contribution is the margin
+above that floor. <em>Nestedness:</em> the concern that the nearest donor
+might sit on the same river and simply measure the target's own water is
+real but minor — excluding it retains 88% of the gain, and the gain is flat
+in donor distance out to 43 km.</p>
+<p>The ungauged version needs the most careful sentence in this document. A
+site with no gauge of its own still has neighbours, and with them
+<strong>an ungauged site matches what a gauged site scored without
+them</strong> (+0.784 → ~+0.83 territory). But the penalty is not closed:
+compared fairly — donors on both sides — the ungauged site still trails the
+gauged one by +0.048 median, +0.132 on chalk, because donors lift both
+settings. One refinement carried the hard cases: requiring donors to be
+hydrogeologically similar (mapped aquifer fraction — no gauge needed) before
+taking the nearest three cuts the chalk penalty roughly in half, at a cost of
+one kilometre of median donor distance. And for a few catchments that behave
+like nowhere near them, donors actively mislead; no weighting scheme we tried
+fixed the median and the pathologies at once.</p>
+</section>
+
+<section class="col">
+<h2><span class="no">§6</span>The synthesis</h2>
+<p>Every mechanism that survived its controls, in one model: an LSTM (for the
+basin-normalised objective), donor gauges (for the flood-day information),
+sixteen epochs. It is the best model in the project on every column of the
+card:</p>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="label">Median NSE · 3 seeds</div>
+    <div class="value">+0.910</div><div class="delta">0.906–0.914 · baseline +0.820</div></div>
+  <div class="stat"><div class="label">NSE, top 1% of flows · 3 seeds</div>
+    <div class="value">+0.136</div><div class="delta">+0.085 to +0.201 · positive on every seed</div></div>
+  <div class="stat"><div class="label">Annual-maximum bias · 3 seeds</div>
+    <div class="value">−10.1%</div><div class="delta">−6.6 to −11.8 · ties the donor tree (−9.0)</div></div>
+  <div class="stat"><div class="label">Failed catchments</div>
+    <div class="value">0 <small>/ 416</small></div><div class="delta">every seed · 11 at baseline</div></div>
+</div>
+
+<section class="col">
+<p>The two ingredients are additive — the LSTM beats the donor tree on 76–80%
+of catchments in every seed — because they fix different things:
+normalisation redistributes capacity toward quiet catchments; donors inject
+the measurement daily rainfall lacks. The seed replication earned its place:
+the first seed's −6.6% AMAX bias and +0.201 top-1% NSE were the optimistic
+end of the distribution. What survives three seeds is a robust ordinary-day
+win, a top-1% NSE that is positive on every seed — genuine skill inside the
+tail, where the baseline scored −0.81 — and an AMAX bias of about −10% that
+<em>ties</em> the donor tree rather than beating it. At daily resolution the
+peak problem is substantially, not entirely, closed, and the last three
+points of bias belong to the donors, not to the architecture.</p>
+</section>
+
+<section class="col">
+<h2><span class="no">§7</span>The residual, named</h2>
+<p>Substantially — not entirely. Put the same calibrated 99% envelope on both
+model classes, donors included, and score it on the 4,950 annual maxima: the
+tree ladder covers 89.6%, the LSTM ladder 89.2% (date-clustered 95% CI
+[0.883, 0.907] — one number, statistically). And both sit at the ~0.88 oracle
+ceiling from §3: the ladders have exhausted <em>this daily feature set</em>.
+That phrasing is deliberate — "the limit is in the data" would overclaim,
+since the two models share inputs, split, and resolution; what converged is
+the pair, and what the oracle shows is that nothing sharper was available to
+them at daily resolution.</p>
+<p>The residual has names. Only 44% of the two ladders' misses are the
+same events; 225 annual maxima (4.5%) escape both envelopes, and they have a
+signature: summer floods are twice over-represented, and <strong>55% of them
+occur on days whose rainfall is below its own 90th percentile</strong> —
+floods that daily rain totals cannot see, almost certainly short intense
+convective bursts averaged into invisibility. (Daily averaging also clips true
+instantaneous peaks by ~20% in the audited catchments, and 178 of 416 test
+maxima exceed the largest flow ever physically gauged at their station — the
+"truth" at the extremes is itself partly extrapolation.)</p>
+<p>Whether hourly data recovers those events was the last experiment, run as
+a 60-catchment pilot (the 48 most-missed plus 12 controls, donors included at
+hourly resolution) with the missed events as its named, pre-registered success
+criterion.</p>
+<div class="note"><span class="tag">Correction · the pilot's first headline</span>
+<p>This section originally reported "roughly three-quarters covered, against
+0% by construction." Adversarial review broke both halves, and its numbers
+verify. The 72–77% scored the hourly model against its own observation
+record, which on these event days runs at a median 85.5% of the daily-file
+values the daily models were judged against; rescored with one ruler, the
+hourly envelope covers <b>51.7%</b> of the missed events on the exact day and
+<b>64.1%</b> within ±1 day. And "0%" was rigged by selection: the events were
+defined as missed by those two ladders, but a third model recovers some
+through diversity alone — the weaker no-donor daily ladders jointly cover
+<b>24.8%</b> of the same events.</p></div>
+<p>The corrected verdict still stands, at honest size: <strong>64% recovered
+against a 25% diversity baseline — a 2.6× recovery</strong>, and demonstrably
+information rather than envelope width (a daily q99 inflated to the hourly
+model's overall coverage captures just 4.1%). Ordinary-day skill holds at
+parity with the daily models. A material share of the residual was sitting
+below the daily sampling rate, and the deconfound says <em>which</em> part of
+the hourly data carries it: a rain-only hourly model recovers the same share
+of the missed events as the donor-equipped one (75% vs 77% on the pilot's own
+comparator; a second seed lands at 75%), while donors buy ordinary-day point
+skill (+0.88 vs +0.77). <strong>The event recovery is hourly rainfall</strong>
+— exactly what the anatomy predicted for floods born of sub-daily bursts. Two
+caveats remain: the catchments were outcome-selected, and the pilot is two
+seeds, not a study.</p>
+</section>
+
+<section class="col">
+<h2><span class="no">§8</span>The ledger</h2>
+</section>
+
+<div class="tbl-wrap"><table>
+<caption>Every model on the identical 1970–2010 / 2010–2022 split, in the order built</caption>
+<tr><th>Model</th><th>Median NSE</th><th>Top-1% NSE</th><th>AMAX bias</th><th>Failures</th></tr>
+<tr><td>Tree baseline</td><td>+0.820</td><td>−0.811</td><td>−17.4%</td><td>11</td></tr>
+<tr><td>Tree, log1p target</td><td>+0.831</td><td>−0.939</td><td>—</td><td>2</td></tr>
+<tr><td>LSTM (16 ep)</td><td>+0.855</td><td>−0.572</td><td>−19.2%</td><td>0</td></tr>
+<tr><td>4-seed LSTM ensemble, upper member</td><td>+0.850</td><td>−0.290</td><td>−14.3%</td><td>0</td></tr>
+<tr><td>Tree + donor gauges</td><td>+0.882</td><td>−0.099</td><td>−9.0%</td><td>8</td></tr>
+<tr class="hi"><td>LSTM + donor gauges (3-seed median)</td><td>+0.910</td><td>+0.136</td><td>−10.1%</td><td>0</td></tr>
+</table></div>
+
+<section class="col">
+<p>And for the decision that matters operationally — <em>is the river about to
+leave its channel</em> — the models are better than any amplitude metric
+suggests: as bankfull-exceedance alarms they reach a critical success index of
+0.63 (tree) to 0.69 (LSTM), with the donor models detecting 80% of exceedance
+days.</p>
+</section>
+
+<section class="col">
+<h2><span class="no">§9</span>What we would tell the next project</h2>
+<ul>
+<li><strong>Score the tail separately, always.</strong> One number hid a
+20-year peak deficit behind +0.82.</li>
+<li><strong>Point statistics and distributions are separate choices.</strong>
+The conditional mean under-predicts extremes by construction; the calibrated
+median is even worse. Four replications.</li>
+<li><strong>Condition your calibration on the event, not the record.</strong>
+Pooled coverage of 0.983 coexisted with missing one flood in six.</li>
+<li><strong>Control every mechanism claim.</strong> A shuffled control killed
+one appealing story (wells) and proved another (donors); an ablation killed a
+third (aquifer memory). The corrected record is in this document and the
+repo's history — including the claim we got wrong in public.</li>
+<li><strong>The cheapest information is often already measured.</strong> Six
+donor-gauge numbers per day beat every architectural intervention we tried,
+combined — though strictly with zero lead time.</li>
+<li><strong>Score both sides with the same ruler, and give every "0%" a
+diversity baseline.</strong> Our hourly headline shrank from 77-vs-0 to
+64-vs-25 the moment the comparators were made consistent. Buy the adversarial
+review before the referee sends it for free.</li>
+<li><strong>Know your observation floor.</strong> Rating-curve uncertainty
+(±10.6% at q99), extrapolated peak observations (178/416), and daily clipping
+(~20%) bound what "fixing the bias" can even mean.</li>
+</ul>
+</section>
+
+<footer class="footer">
+  <div>Data: CAMELS-GB v2 (Coxon et al.) · 416/671 catchments · HadUK-Grid + Hydro-PE forcings
+  (the CEH-GEAR/CHESS columns end 2019 — the repo's oldest trap)</div>
+  <div>Models: scikit-learn HistGradientBoosting (400 iter, 63 leaves) · PyTorch LSTM
+  (128 hidden, 365-day windows, per-basin normalisation), trained on an Intel Arc 140T</div>
+  <div>Full provenance: experiments/PLAN.md · results/*.csv · every finding's script and
+  prediction parquet committed · corrections preserved in git history</div>
+</footer>
+
+</div>

@@ -1,0 +1,622 @@
+<title>Floods in Plain Words</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root {
+  color-scheme: light;
+  --paper: #eef1ee; --panel: #f7f9f7; --ink: #101c1a; --ink-2: #3e4f4c;
+  --muted: #6e7c79; --rule: #d1d9d5; --rule-soft: #e0e6e2;
+  --accent: #0b6b72; --accent-soft: #d9e8e8; --warn: #9d4a1c; --warn-soft: #f0e2d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #0d1413; --panel: #141d1c; --ink: #e9efec; --ink-2: #b3c0bc;
+    --muted: #7f8f8b; --rule: #263230; --rule-soft: #1c2726;
+    --accent: #52aeb4; --accent-soft: #12302f; --warn: #d5854c; --warn-soft: #2c2018;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #0d1413; --panel: #141d1c; --ink: #e9efec; --ink-2: #b3c0bc;
+  --muted: #7f8f8b; --rule: #263230; --rule-soft: #1c2726;
+  --accent: #52aeb4; --accent-soft: #12302f; --warn: #d5854c; --warn-soft: #2c2018;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size: 17px; line-height: 1.65; margin: 0;
+  padding: 0 clamp(16px, 5vw, 48px) 96px; -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 760px; margin: 0 auto; }
+.masthead { padding: 56px 0 32px; border-bottom: 3px solid var(--ink); }
+.kicker { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+h1 { font-family: "Zilla Slab", Georgia, serif; font-size: clamp(36px, 5.5vw, 54px);
+  font-weight: 700; line-height: 1.06; margin: 0 0 16px; text-wrap: balance; }
+.standfirst { font-size: 19px; line-height: 1.55; color: var(--ink-2); margin: 0 0 14px; }
+.dateline { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--muted); }
+h2 { font-family: "Zilla Slab", Georgia, serif; font-size: 27px; font-weight: 600;
+  line-height: 1.2; margin: 56px 0 10px; text-wrap: balance; }
+h3 { font-family: "Zilla Slab", Georgia, serif; font-size: 19px; font-weight: 600; margin: 30px 0 6px; }
+p { margin: 12px 0; }
+strong { font-weight: 600; }
+.mono { font-family: "IBM Plex Mono", monospace; font-size: .92em; }
+ol, ul { padding-left: 22px; } li { margin: 7px 0; } li::marker { color: var(--accent); }
+
+/* glossary */
+dl { margin: 18px 0; }
+dt { font-family: "Zilla Slab", Georgia, serif; font-size: 19px; font-weight: 600;
+  margin: 26px 0 4px; padding-top: 14px; border-top: 1px solid var(--rule); }
+dt .abbr { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500;
+  color: var(--accent); letter-spacing: .06em; margin-left: 8px; }
+dd { margin: 0; }
+dd p { margin: 8px 0; }
+.def { padding-left: 14px; border-left: 3px solid var(--accent); }
+.def .lbl, .use .lbl { font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; }
+.use { padding-left: 14px; border-left: 3px solid var(--rule); margin-top: 8px; color: var(--ink-2); }
+.formula { font-family: "IBM Plex Mono", monospace; font-size: 14.5px; background: var(--panel);
+  border: 1px solid var(--rule); padding: 10px 14px; margin: 8px 0; overflow-x: auto; }
+.src { color: var(--muted); font-size: 14px; }
+
+.box { background: var(--panel); border: 1px solid var(--rule); padding: 16px 20px; margin: 22px 0; }
+.box .tag { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--accent); font-weight: 500; }
+.box p { margin: 8px 0 0; }
+.caution { background: var(--warn-soft); border-left: 3px solid var(--warn); padding: 14px 18px; margin: 22px 0; }
+.caution .tag { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--warn); font-weight: 500; }
+.caution p { margin: 8px 0 0; }
+.footer { margin-top: 72px; padding-top: 18px; border-top: 3px solid var(--ink);
+  font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--muted); line-height: 1.8; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="kicker">CAMELS-GB flood-modelling project · reader's guide</p>
+  <h1>Floods in Plain Words</h1>
+  <p class="standfirst">What problem we worked on, how we went about it, and what
+  every technical term means, with the definitions taken from the standard
+  sources rather than paraphrased.</p>
+  <p class="dateline">2026-08-30 · companion to <em>Trees on the Hydrograph</em> and
+  <em>Where the Floods Went</em></p>
+</header>
+
+<h2>1. The problem</h2>
+<p>A river gauge measures how much water passes a point on a river each day.
+Given a record of past rainfall and past river flow, we want a computer model
+that predicts the flow on days it has not seen. That is a well-studied problem.
+Modern models do it well on ordinary days.</p>
+<p>The specific problem we worked on is narrower: <strong>these models predict
+ordinary days well and floods badly</strong>. A model that explains 82% of the
+day-to-day variation in flow can still, on the highest-flow day of each year,
+predict a value about a fifth too low, year after year, in nearly every river.
+Floods are the days that matter for warnings, for insurance, and for deciding
+how high to build a bridge, so a model that is good on average and wrong on
+those days is not good enough.</p>
+<p>We set out to answer three questions in order:</p>
+<ol>
+  <li><strong>Why</strong> do the models miss floods? Is it the type of model,
+  the way it is trained, or something missing from the information it is given?</li>
+  <li><strong>What fixes it?</strong> We tested changes to the model, changes to
+  the training target, a different model family, extra measurements, and
+  finer-grained data.</li>
+  <li><strong>What is left</strong> after the fixes, and why?</li>
+</ol>
+
+<h2>2. Why this is interesting</h2>
+<p><strong>Practically.</strong> Flood estimates feed directly into decisions
+about land use, infrastructure and emergency response. In the UK the standard
+methods (the Flood Estimation Handbook) rely on statistics of past peak flows;
+machine-learning models are increasingly used alongside them. If a model's
+peaks are systematically a fifth too low, a design based on it is under-built.
+Knowing <em>why</em> the peaks are low tells you whether the fix is a better
+model or better data, which are very different investments.</p>
+<p><strong>Scientifically.</strong> Three of our findings bear on questions the
+field is actively arguing about:</p>
+<ul>
+  <li>Whether the well-known advantage of one model family (neural networks
+  with memory) over another (decision trees) on British rivers comes from
+  memory of past conditions or from how the training error is weighted. We
+  found it is mostly the weighting, which any model family can copy.</li>
+  <li>Whether a probability model that looks correct overall is also correct
+  on flood days. It is not automatically, and we show why a "correct" one still
+  under-covers the worst day of the year, for a reason that is a property of
+  the question rather than a fault of the model.</li>
+  <li>Where the missing flood information is. Much of it is in the flows
+  measured at neighbouring gauges at the same moment, and the rest is in
+  rainfall measured hour by hour rather than day by day.</li>
+</ul>
+<p>A fourth reason is about method. The project was run with controls,
+replications, and an adversarial review of its own claims, and two of its
+headline numbers were corrected as a result. That record is itself a useful
+example of how to do this kind of work.</p>
+
+<h2>3. The data</h2>
+<p>Everything uses <strong>CAMELS-GB</strong>, a public dataset for 671 river
+catchments in Great Britain (version 2, covering 1970–2022). For each catchment
+it gives daily rainfall, temperature, evaporation demand, and measured river
+flow, plus a table of fixed properties such as area, soil type and underlying
+rock. It also provides hourly flow and rainfall, and water-level records from
+55 groundwater observation wells.</p>
+<p>We used the 416 catchments whose daily flow record is at least 95% complete.
+Two rules applied throughout:</p>
+<ul>
+  <li><strong>Time split.</strong> Models learn from 1970–2010 and are tested
+  on 2010–2022, a later period they never see during training. This is the
+  standard way to check a model has learned something that carries forward
+  rather than memorised the past.</li>
+  <li><strong>No cheating features.</strong> Nothing computed from the river
+  flow itself (such as average flow, or how flashy the river is) is given to
+  the model as an input, because that would leak the answer into the
+  question.</li>
+</ul>
+
+<h2>4. The method, step by step</h2>
+<ol>
+  <li><strong>Build the inputs.</strong> For every catchment and every day:
+  today's rainfall, rainfall on each of the previous seven days, rainfall
+  totals over the previous 3, 7, 14, 30, 90, 180 and 365 days, similar
+  summaries of evaporation demand and temperature, the day of year, and the
+  catchment's fixed properties. The rainfall totals over long windows stand in
+  for how wet the ground and the underground stores are.</li>
+  <li><strong>Train a model.</strong> The model is shown the inputs and the
+  measured flow for every day in 1970–2010 and adjusts itself to reduce the
+  difference between its prediction and the measurement.</li>
+  <li><strong>Test it.</strong> The trained model predicts every day in
+  2010–2022. Those predictions are compared with the measurements using a fixed
+  set of scores (section 5). The scores are calculated separately for ordinary
+  days and for flood days, because the first experiment showed the overall
+  score hides what happens on floods.</li>
+  <li><strong>Change one thing and repeat.</strong> Each experiment changes
+  exactly one thing (the model family, the training target, an extra input)
+  and re-runs steps 2–3 on the identical split, so that any change in the
+  scores can be attributed to that one thing.</li>
+  <li><strong>Run a control.</strong> When an extra input appears to help, we
+  also run a version where that input is deliberately scrambled (for example,
+  giving each catchment some other catchment's neighbouring gauges). If the
+  scrambled version helps just as much, the improvement was not coming from
+  the information we thought.</li>
+  <li><strong>Replicate.</strong> Neural-network results depend on a random
+  starting point. Headline results were re-run from three different starting
+  points and reported as a range.</li>
+  <li><strong>Review adversarially.</strong> Two independent reviews were
+  commissioned to find flaws in the methods and the conclusions. Their
+  findings were checked and, where correct, the claims were changed.</li>
+</ol>
+
+<div class="box"><span class="tag">In one sentence</span>
+<p>Teach a model on forty years of weather and river data, test it on the
+following twelve, score ordinary days and flood days separately, change one
+thing at a time, scramble anything that seems to help to make sure it really
+does, repeat from different random starts, and invite attack.</p></div>
+
+<h2>5. The scores, defined</h2>
+<p>Every model reports the same set of numbers. Each is defined below with its
+source, followed by how it was used here.</p>
+
+<dl>
+<dt>Nash–Sutcliffe efficiency <span class="abbr">NSE</span></dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>One minus the ratio of the sum of squared differences between predicted and
+observed flows to the sum of squared differences between the observed flows and
+their own average.</p>
+<div class="formula">NSE = 1 − Σ(observed − predicted)² / Σ(observed − mean of observed)²</div>
+<p>The value is 1 for a perfect model. A value of 0 means the model is no better
+than simply predicting the long-run average flow every day. Negative values
+mean the model is worse than that. <span class="src">Nash and Sutcliffe, 1970,
+<em>Journal of Hydrology</em>.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Calculated per catchment over the 2010–2022 test period, then the median
+(middle value) across the 416 catchments is reported as "median NSE". Because
+the formula squares the differences, the largest flows dominate it, yet in
+practice a model can score 0.82 while under-predicting every flood: floods are
+rare, so their errors are a small share of the total.</p></div>
+</dd>
+
+<dt>Kling–Gupta efficiency <span class="abbr">KGE</span></dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>A score that combines three separate comparisons between predicted and
+observed flows: how well they rise and fall together (correlation, <em>r</em>),
+the ratio of their spreads (standard deviations, <em>α</em>), and the ratio of
+their averages (<em>β</em>).</p>
+<div class="formula">KGE = 1 − √[(r − 1)² + (α − 1)² + (β − 1)²]</div>
+<p>A perfect model scores 1. <span class="src">Gupta, Kling, Yilmaz and
+Martinez, 2009, <em>Journal of Hydrology</em>.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Reported alongside NSE as a check, because it separately penalises a model
+whose predictions have too little spread, which is exactly what a model that
+flattens floods does.</p></div>
+</dd>
+
+<dt>Annual maximum <span class="abbr">AMAX</span></dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>The annual maximum series is the set of values formed by taking the single
+largest flow in each year of record. It is the basic input to flood frequency
+analysis, the statistical method used to estimate how large a flood of a given
+rarity is. <span class="src">Flood Estimation Handbook, Institute of Hydrology,
+1999; the UK water year runs 1 October to 30 September (National River Flow
+Archive).</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>For each catchment and each water year in the test period with at least 350
+days of data, we take the day with the largest observed daily flow. That gives
+4,950 "AMAX days". Two points of caution: the Flood Estimation Handbook uses
+the instantaneous peak within the day, whereas our records are daily averages,
+which are lower (on the catchments we checked, by a median of about 30%); and
+"AMAX bias" below is computed on the model's value for that same day.</p></div>
+</dd>
+
+<dt>AMAX bias</dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>Bias, in forecast verification, is the systematic difference between
+predictions and observations; relative bias expresses it as a percentage of
+the observed value. <span class="src">Jolliffe and Stephenson, <em>Forecast
+Verification</em>, 2nd ed., 2012.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>For each AMAX day: (predicted − observed) / observed, as a percentage. We
+report the median across all 4,950 catchment-years. "−17.4%" means that on the
+typical worst day of the year, the model's value is 17.4% below what was
+measured. One limitation raised in review: the median hides that some
+catchment-years are over-predicted and some under-predicted; the plain average
+is close to zero.</p></div>
+</dd>
+
+<dt>Top-1% NSE</dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>Not a standard score; it is NSE (as defined above) computed only on the days
+whose observed flow is in the highest 1% for that catchment.</p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>About 44 days per catchment. It asks: within the flood days, does the model
+tell the bigger floods from the smaller ones? A negative value means it does
+worse than predicting the average flood every time. It is a fragile number
+(few days, and any model that shrinks towards the average is punished), so we
+treat it as a diagnostic and never as the only headline.</p></div>
+</dd>
+
+<dt>Quantile</dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>The <em>p</em>-quantile of a distribution is the value below which a
+proportion <em>p</em> of the values fall. The median is the 0.5-quantile; a
+percentile is a quantile expressed in hundredths. <span class="src">Standard
+statistical definition; see e.g. Koenker, <em>Quantile Regression</em>,
+2005.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Instead of asking a model for one number ("tomorrow's flow"), we can ask for
+a quantile: "the flow that tomorrow will stay below 99 times in 100" is the
+0.99-quantile, written q99. A set of such values (q05, q25, q50, q75, q95,
+q99) is called a ladder in our notes.</p></div>
+</dd>
+
+<dt>Quantile regression</dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>A method for estimating a chosen quantile of the outcome given the inputs,
+rather than the average of the outcome. It is fitted by minimising a
+particular asymmetric loss (the "pinball" or check loss) that penalises
+under-prediction and over-prediction unequally. <span class="src">Koenker and
+Bassett, 1978, <em>Econometrica</em>.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Both model families were trained this way to produce ladders. Fitting each
+quantile separately allows them to cross (a q95 above a q99 on some day); we
+sort them into order after the fact, and for the neural network we built the
+ladder so that it cannot cross.</p></div>
+</dd>
+
+<dt>Calibration (of probabilistic predictions)</dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>Calibration refers to the statistical consistency between the distributional
+forecasts and the observations. A q99 is calibrated if, over many cases, the
+observation falls below it 99% of the time. <span class="src">Gneiting,
+Balabdaoui and Raftery, 2007, <em>Journal of the Royal Statistical Society
+B</em>.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>"Coverage" is the observed proportion: the fraction of days on which the
+measurement was at or below the model's quantile. We compute it over all test
+days ("pooled"), per catchment, and separately on AMAX days. The last is the
+one that matters for floods, and it is not expected to reach 99% even for a
+perfectly calibrated model, because the worst day of the year is, by
+selection, more likely to be a day the river beat the odds. We simulated what a
+perfectly calibrated model of the same sharpness would score and use that as
+the benchmark.</p></div>
+</dd>
+
+<dt>Sharpness</dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>The concentration of the predictive distribution: how narrow the predicted
+range is. Sharpness is a property of the forecasts only, not of the
+observations. <span class="src">Gneiting, Balabdaoui and Raftery, 2007.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Measured as the typical width of the q05–q95 band in mm/day. A model can be
+made "calibrated" by predicting a huge range every day; the goal is the
+narrowest range that is still calibrated.</p></div>
+</dd>
+
+<dt>Probability of detection, false alarm ratio, critical success index
+<span class="abbr">POD · FAR · CSI</span></dt>
+<dd>
+<div class="def"><span class="lbl">Definition</span>
+<p>For yes/no events, count hits (event predicted and happened), misses
+(happened, not predicted) and false alarms (predicted, did not happen).</p>
+<div class="formula">POD = hits / (hits + misses)<br>FAR = false alarms / (hits + false alarms)<br>CSI = hits / (hits + misses + false alarms)</div>
+<p><span class="src">Standard forecast-verification measures; Jolliffe and
+Stephenson, 2012; US National Weather Service verification glossary.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>The event is "flow exceeds bankfull" (below). This treats a flood as a
+yes/no warning decision, which is how it is used operationally.</p></div>
+</dd>
+</dl>
+
+<h2>6. The river terms, defined</h2>
+<dl>
+<dt>Catchment</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>The area of land from which all surface water drains to a single point on a
+river (also called a drainage basin or watershed). <span class="src">National
+River Flow Archive glossary.</span></p></div></dd>
+
+<dt>Gauging station; discharge</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A gauging station is a site on a river where water level is measured
+continuously and converted to discharge. Discharge (or flow) is the volume of
+water passing a point per unit time, usually cubic metres per second.
+<span class="src">National River Flow Archive.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>CAMELS-GB expresses flow as <strong>specific discharge</strong>: the volume
+divided by the catchment area, giving a depth of water per day in millimetres
+(mm/day). This makes small and large rivers comparable; a flood of 50 mm/day
+is a large flood in any catchment. The hourly files use mm/hour, which is 24
+times smaller for the same flow, a difference that caught us once.</p></div></dd>
+
+<dt>Rating curve</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>The relationship, established by direct measurements, between the water
+level at a gauging station and the discharge. It is used to convert the
+continuously measured level into flow. <span class="src">National River Flow
+Archive; ISO 1100-2.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Floods are usually larger than any flow ever directly measured at the
+station, so the curve is extrapolated and the "observed" flood flow carries
+uncertainty. The dataset gives this as a percentage band; at the 99th
+percentile of flow it is about ±11% at the median station. Any model bias
+smaller than that cannot be distinguished from measurement error.</p></div></dd>
+
+<dt>Hydrograph</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A graph of river discharge against time.</p></div></dd>
+
+<dt>Bankfull discharge</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>The discharge at which the river just fills its channel to the top of its
+banks; above it, water spreads onto the floodplain. <span class="src">Leopold,
+Wolman and Miller, <em>Fluvial Processes in Geomorphology</em>, 1964.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Provided for 318 of the stations in the dataset. Used as the threshold for
+the yes/no flood-warning scores.</p></div></dd>
+
+<dt>Baseflow; groundwater-dominated catchment; chalk</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>Baseflow is the part of river flow that comes from groundwater and other
+slow stores, sustaining the river between rainfall events. A
+groundwater-dominated catchment is one where most of the flow is baseflow.
+Chalk is a porous limestone that forms Britain's largest aquifer; rivers on it
+respond slowly to rain and their flow is governed by the level of the water
+table, which integrates rainfall over months to years. <span class="src">British
+Geological Survey; CAMELS-GB attribute "fraction of catchment underlain by a
+high-productivity aquifer".</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>"Chalk catchments" in our work means the 23 catchments where at least half
+the area is underlain by a high-productivity aquifer. This is a strict
+definition; several classic chalk rivers (the Ver, the Mimram) fall below it,
+which affected one of our conclusions.</p></div></dd>
+
+<dt>Ungauged catchment</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A catchment with no flow measurements of its own. Predicting flow there is
+the subject of a long-running research effort (the Prediction in Ungauged
+Basins decade, 2003–2012). <span class="src">Sivapalan et al., 2003,
+<em>Hydrological Sciences Journal</em>.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Simulated by holding whole catchments out of training and predicting them
+with a model that has only seen other catchments. Every catchment is held out
+exactly once across five runs. Note that all our "ungauged" catchments are in
+a densely gauged country; the results do not automatically apply to regions
+with few gauges.</p></div></dd>
+
+<dt>Donor catchment</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>In UK flood estimation, a gauged catchment whose data are used to improve an
+estimate at another, usually ungauged, site. <span class="src">Flood Estimation
+Handbook, 1999.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>We gave each catchment, as extra inputs, the measured flow today and
+yesterday at its three nearest gauges (median distance 13 km), each expressed
+as a fraction of that gauge's own typical high flow. A variant restricted
+donors to gauges on similar rock.</p></div></dd>
+
+<dt>Nowcasting</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>In meteorology, a description of current conditions and a forecast for the
+next very short period (zero to a few hours), based mainly on current
+observations. <span class="src">World Meteorological Organization.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Estimating today's flow from today's measurements at neighbouring gauges.
+This has <strong>no lead time</strong>: it tells you the size of a flood that
+is already happening, not that one is coming. When we delayed the neighbour
+measurements by one day, most of the benefit disappeared.</p></div></dd>
+
+<dt>Forcing data; potential evapotranspiration <span class="abbr">PET</span></dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>Forcing data are the weather inputs that drive a hydrological model:
+rainfall, temperature, and evaporation demand. Potential evapotranspiration is
+the amount of water that would evaporate from the ground and be transpired by
+plants if water were not limiting. <span class="src">Standard hydrological
+usage; PET after Penman, 1948.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Daily rainfall and temperature from HadUK-Grid (the Met Office's gridded
+observations) and PET from the Hydro-PE dataset. Two other rainfall products in
+the files stop in 2019, so they could not be used for a test period ending in
+2022.</p></div></dd>
+
+<dt>Water year</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A twelve-month period chosen so that it starts when stores are typically at
+their lowest; in the UK, 1 October to 30 September. <span class="src">National
+River Flow Archive.</span></p></div></dd>
+</dl>
+
+<h2>7. The modelling terms, defined</h2>
+<dl>
+<dt>Gradient-boosted decision trees</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A model built from many simple decision trees added one after another, each
+new tree fitted to the errors left by the trees before it. <span class="src">
+Friedman, 2001, <em>Annals of Statistics</em>.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Referred to as "the tree" throughout. It has no memory of its own; the
+rainfall totals over past windows are what tell it about past conditions.</p></div></dd>
+
+<dt>Long short-term memory network <span class="abbr">LSTM</span></dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A type of artificial neural network designed for sequences, with an
+internal memory cell that can retain information across many steps.
+<span class="src">Hochreiter and Schmidhuber, 1997, <em>Neural
+Computation</em>.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Given the previous 365 days of weather as a sequence, one catchment at a
+time, with the catchment's fixed properties attached to every day. Its memory
+is reset for every prediction, so it cannot remember further back than 365
+days; this mattered when we tested whether "memory" explained its results.</p></div></dd>
+
+<dt>Training, testing and the split</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>Training is the process of adjusting a model to fit known examples; testing
+is measuring it on examples withheld from training. The split is the rule for
+which examples are withheld.</p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Train on 1970–2010, test on 2010–2022, always. One weakness raised in
+review: a single split means every decision in the project was checked on the
+same twelve years, which can make late results look slightly better than they
+are.</p></div></dd>
+
+<dt>Target normalisation</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>Rescaling the quantity being predicted (the target) before training, for
+example dividing each catchment's flows by that catchment's own average and
+spread.</p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>The neural network was trained on normalised flows, which means an error of
+a given size counts the same in a small river as in a large one. The tree was
+trained on raw flows, so its errors were dominated by the largest rivers. Much
+of the neural network's advantage turned out to come from this difference, not
+from memory.</p></div></dd>
+
+<dt>Seed; replication</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A seed is the number that sets the random starting point of a training run.
+Two runs with different seeds on identical data give slightly different
+models. Replication means repeating a result under such variation.</p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Flood scores for the neural network varied between seeds by as much as the
+differences between models. Final results are given as the range over three
+seeds. One headline claim (that the best model beat the tree on flood peaks)
+did not survive this and was withdrawn.</p></div></dd>
+
+<dt>Control experiment; shuffled control</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A control is a comparison run identical to the experiment except for the
+one factor under test. A shuffled (permutation) control breaks the link
+between an input and the outcome by randomly reassigning the input, while
+keeping its values otherwise unchanged. <span class="src">Fisher, <em>The
+Design of Experiments</em>, 1935.</span></p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Used twice. Groundwater well levels: the shuffled version helped exactly as
+much as the real one, so the wells carried no catchment-specific information.
+Neighbouring gauges: the shuffled version helped not at all, so the benefit
+was real.</p></div></dd>
+
+<dt>Ensemble</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A set of models whose predictions are combined, typically by averaging.</p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>The average of three seeds is reported as the most defensible single
+model. Taking the highest of several models' predictions each day gives
+higher floods but is not a calibrated estimate.</p></div></dd>
+
+<dt>Oracle benchmark</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>A hypothetical model with some ideal property, used as a reference point
+rather than a usable model.</p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>We asked: if a model's quantiles were perfectly calibrated and exactly as
+sharp as ours, what share of AMAX days would fall under its q99? The answer,
+by simulation, was about 88%, not 99%. Our models scored 90%. So the models
+were not failing on flood days; they were at the limit of what their inputs
+allowed.</p></div></dd>
+
+<dt>Temporal resolution: daily and hourly</dt>
+<dd><div class="def"><span class="lbl">Definition</span>
+<p>The spacing of the data in time. Daily data give one value per day (here,
+the average over the day); hourly data give 24.</p></div>
+<div class="use"><span class="lbl">How we used it</span>
+<p>Floods in small British rivers rise and fall within hours. A daily average
+smooths them, and an intense two-hour storm can produce an unremarkable daily
+rainfall total. About half the floods that every daily model missed happened
+on days whose rainfall total was not unusual. An hourly model recovered a large
+share of those, and a version without neighbour gauges recovered the same
+share, showing the recovery came from hourly rainfall.</p></div></dd>
+</dl>
+
+<h2>8. What we found, in plain words</h2>
+<ol>
+  <li>The overall score hides floods. A model can score 0.82 and still
+  under-predict every annual peak by a fifth.</li>
+  <li>The under-prediction is partly built into the question. Asking a model
+  for the single most likely flow gives an answer that sits below the actual
+  flood on flood days, for any model, because the range of possible outcomes
+  on such days is very wide and lopsided. Asking for a high quantile instead
+  gives a usable upper bound.</li>
+  <li>An upper bound that is correct over all days can still fall short on the
+  worst day of the year, and most of that shortfall is unavoidable for any
+  model with the same inputs. The right benchmark is a simulated perfect model,
+  not 99%.</li>
+  <li>The neural network's advantage over the tree on difficult catchments
+  comes mostly from how its errors are weighted in training, not from memory.
+  A small memory effect remains on chalk rivers. Our first, published,
+  explanation was wrong and was corrected.</li>
+  <li>Groundwater well levels, given as an extra input, did not help.</li>
+  <li>The flows measured at the nearest gauges, today, help a great deal: the
+  annual-peak shortfall roughly halves. This only works with no lead time,
+  works in a densely gauged country, and does not remove the disadvantage of
+  a site having no gauge of its own.</li>
+  <li>What the daily models still miss is largely explained by rainfall that
+  is intense for a few hours but ordinary over the day. Hourly rainfall
+  recovers about two-thirds of those events.</li>
+</ol>
+
+<div class="caution"><span class="tag">What the numbers do not show</span>
+<p>All results are for Great Britain, 2010–2022, daily averages, and one
+dataset. The "ungauged" results assume neighbours within about 15 km. The
+hourly results are from 60 catchments chosen because daily models did badly
+on them, and from two training runs. Flood measurements themselves are
+uncertain by roughly ±11% at the flows that matter.</p></div>
+
+<footer class="footer">
+  <div>Data: CAMELS-GB v2 (Coxon et al., Earth System Science Data). Definitions cited to their
+  original sources where they exist; terms marked "not a standard score" are this project's own.</div>
+  <div>Full record: experiments/PLAN.md in the repository; results in experiments/results/.</div>
+</footer>
+
+</div>
