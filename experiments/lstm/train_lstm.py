@@ -108,11 +108,12 @@ def donor_features(gauges, k, train_end):
 class Windows(torch.utils.data.Dataset):
     """(basin, t) pairs; __getitem__ slices the 365-day window ending at t."""
 
-    def __init__(self, X, Y, S, index, seq=SEQ):
+    def __init__(self, X, Y, S, index, seq=SEQ, lead=0):
         self.X, self.Y, self.S, self.index = X, Y, S, index
         self.seq = seq  # carried on the instance: spawned DataLoader workers
                         # (Windows/macOS) re-import this module and would
                         # otherwise see the default SEQ, not --seq
+        self.lead = lead
 
     def __len__(self):
         return len(self.index)
@@ -121,7 +122,7 @@ class Windows(torch.utils.data.Dataset):
         b, t = self.index[i]
         x = self.X[b][t - self.seq + 1:t + 1]                 # (seq, n_forcing)
         s = np.broadcast_to(self.S[b], (self.seq, self.S[b].shape[0]))
-        return np.concatenate([x, s], axis=1), self.Y[b][t], b
+        return np.concatenate([x, s], axis=1), self.Y[b][t + self.lead], b
 
 
 class LSTMModel(nn.Module):
@@ -158,6 +159,14 @@ def main():
     ap.add_argument("--donors", type=int, default=0,
                     help="K nearest-gauge nowcast features (same-day + lag-1 "
                          "q95-scaled observed flow per donor); 0 = off")
+    ap.add_argument("--lead", type=int, default=0,
+                    help="forecast lead in days: the window ends at day t and "
+                         "the target is flow at t+lead. 0 = simulation (default)")
+    ap.add_argument("--autoreg", action="store_true",
+                    help="add the target's own normalised observed flow as an "
+                         "input channel at every step of the window (known up "
+                         "to day t; NaN -> 0). The persistence information a "
+                         "real forecaster would use first.")
     args = ap.parse_args()
     global SEQ
     SEQ = args.seq
@@ -201,13 +210,17 @@ def main():
         mu, sd = float(ytr.mean()), float(ytr.std()) + 1e-6
         y_stats[b] = (mu, sd)
         Y[b] = (y - mu) / sd
+        if args.autoreg:
+            X[b] = np.concatenate(
+                [X[b], np.nan_to_num(Y[b], nan=0.0)[:, None].astype("float32")], axis=1)
         S[b] = s_z.loc[b].to_numpy("float32")
         dates[b] = d.index
         ok = ~np.isnan(y)
-        for t in range(SEQ - 1, len(d)):
-            if not ok[t]:
+        L = args.lead
+        for t in range(SEQ - 1, len(d) - L):
+            if not ok[t + L]:
                 continue
-            dt = d.index[t]
+            dt = d.index[t + L]          # split on the TARGET date
             if dt <= train_end:
                 (va_index if dt > val_start else tr_index).append((b, t))
             elif dt >= pd.Timestamp(TEST_START):
@@ -243,7 +256,7 @@ def main():
     def run_eval(index, sample=50_000):
         idx = [index[i] for i in rng.choice(len(index),
                                             min(sample, len(index)), replace=False)]
-        dl = torch.utils.data.DataLoader(Windows(X, Y, S, idx, SEQ), batch_size=1024,
+        dl = torch.utils.data.DataLoader(Windows(X, Y, S, idx, SEQ, lead=args.lead), batch_size=1024,
                                          num_workers=args.workers)
         model.eval(); preds, obs = [], []
         with torch.no_grad():
@@ -253,7 +266,7 @@ def main():
         p, o = np.concatenate(preds), np.concatenate(obs)
         return 1 - ((o - p) ** 2).sum() / ((o - o.mean()) ** 2).sum()
 
-    tr_ds = Windows(X, Y, S, tr_index, SEQ)
+    tr_ds = Windows(X, Y, S, tr_index, SEQ, lead=args.lead)
     for ep in range(start_ep, args.epochs):
         sampler = torch.utils.data.RandomSampler(
             tr_ds, replacement=True, num_samples=args.steps * args.batch)
@@ -275,7 +288,7 @@ def main():
 
     # --- full test inference, harness format ---------------------------------
     print("test inference...", flush=True)
-    dl = torch.utils.data.DataLoader(Windows(X, Y, S, te_index, SEQ), batch_size=1024,
+    dl = torch.utils.data.DataLoader(Windows(X, Y, S, te_index, SEQ, lead=args.lead), batch_size=1024,
                                      num_workers=args.workers)
     model.eval(); preds = []
     with torch.no_grad():
@@ -287,8 +300,9 @@ def main():
     gid = np.array([b for b, _ in te_index], dtype=np.int32)
     mu = np.array([y_stats[b][0] for b, _ in te_index], dtype=np.float32)
     sd = np.array([y_stats[b][1] for b, _ in te_index], dtype=np.float32)
-    obs = np.array([Y[b][t] for b, t in te_index], dtype=np.float32) * sd + mu
-    idx = pd.DatetimeIndex([dates[b][t] for b, t in te_index], name="date")
+    L = args.lead
+    obs = np.array([Y[b][t + L] for b, t in te_index], dtype=np.float32) * sd + mu
+    idx = pd.DatetimeIndex([dates[b][t + L] for b, t in te_index], name="date")
     if args.head == "quantile":
         q = np.clip(p_norm * sd[:, None] + mu[:, None], 0, None)
         res = pd.DataFrame({"gid": gid, "obs": obs, "pred": q[:, 2]}, index=idx)

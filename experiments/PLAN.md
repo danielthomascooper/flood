@@ -352,6 +352,47 @@ daily files — a units trap for any cross-comparison); post-2016 gradgb
 outages are zero-filled with a rain_gap flag column. The project's
 question ladder is, at this point, answered at every rung.
 
+### Phase 6 (2026-08-30): from simulation to forecasting
+
+Nothing built so far forecasts: every model's inputs are complete only at
+the end of the target day. Phase 6 moves the target into the future. Issue
+day = t, target = flow at t+L. Inputs = everything known at end of t:
+forcings and rolling windows to t (rain on t included), optionally the
+target's own past flow (autoregression — deliberately withheld until now)
+and donors at t. Skill is judged against **persistence** (flow(t+L) =
+flow(t)), the bar every river forecaster must beat.
+
+**Arc box queue** (pull first — train_lstm.py now has `--lead L` and
+`--autoreg`; both compose with `--donors` and `--head quantile`):
+
+- F1 **1-day-ahead LSTM forecaster** (~1.5 h):
+  `python experiments/lstm/train_lstm.py --lead 1 --autoreg --donors 3 --epochs 16 --out experiments/results/lstm_fc1`
+  Window ends at t, target t+1, own normalised flow as an input channel,
+  donors at ≤t. Parquet rows are dated at the TARGET day, so evaluate.py
+  scores it directly; persistence is obs shifted from the daily flow
+  matrix (CPU-side scoring script coming).
+- F2 **Same with the quantile head** (~1.5 h):
+  `... --lead 1 --autoreg --donors 3 --head quantile --epochs 16 --out experiments/results/lstm_fc1_q`
+  The useful operational object: a calibrated 1-day-ahead flood bound.
+- F3 **3-day lead** (~1.5 h): `--lead 3 --autoreg --donors 3 --epochs 16 --out experiments/results/lstm_fc3`
+  How fast skill decays with lead.
+- Optional F4: `--lead 1 --autoreg --epochs 16` (no donors) to price the
+  neighbours at lead 1 for the LSTM as well.
+- Commit parquets + manifests + logs; push. UTF-8 only. Val curves in the
+  commit message as before.
+
+**CPU box queue:**
+
+- C1 `hgb_forecast.py` (running): tree at L=1 — persistence, weather-only,
+  + own flow (ar), + donors (ar_donor), + actual rain on t+1 (ar_perfect
+  = perfect-rainfall-forecast ceiling); ar_donor at L=2, 3. Standard card
+  + paired skill vs persistence + AMAX bias by lead.
+- C2 (after Arc results): score the LSTM forecasters vs persistence with
+  the same script logic; flood-day skill by lead is the headline table.
+
+Known scope: no NWP rainfall forecasts here — "weather" variants use rain
+up to t only; ar_perfect uses the *observed* rain on t+1 as the ceiling.
+
 ### Phase 5 review synthesis (2026-08-30) — corrections to the record
 
 Two adversarial reviews (methodology; conclusions) reported. Their most
