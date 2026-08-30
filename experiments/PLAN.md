@@ -389,6 +389,30 @@ for us)**.
 median catchment; orographic and convective rain under-resolved. The
 tree's perfect-rain run (+0.859 / −28%) is the ceiling no archive reaches.
 
+**Status (2026-08-30 evening):** Track B pull RUNNING on the CPU box —
+control member, leads 1–3, 2010-10-01 → 2019-12-31 then 2020-09-23 →
+2022-09-30, ~4 MB/day at this box's 0.55 MB/s line ≈ 9–10 h, into
+`cache/nwp/gefs_c00_YYYYMM.nc` (zlib, ~1 MB/month). Monthly cubes are
+resume-safe — rerun the same command to fill gaps.
+
+**Arc box (optional acceleration, no code needed):** if its line is
+faster, run the same fetcher for the perturbed members and commit the
+cubes (they are small — put them under `experiments/results/nwp/` via
+`--out`, since `cache/` is gitignored):
+`python experiments/nwp/fetch_gefs.py 2010-10-01 2019-12-31 --member p01 --leads 3 --out experiments/results/nwp`
+(needs `pip install eccodes cfgrib xarray netCDF4 requests`). Members
+p02–p04 likewise if time allows; ensemble spread is the payoff.
+
+**Next build once cubes exist (Phase 7 model):** map each catchment to
+its nearest 0.25° cell (gauge_lat/gauge_lon in the topographic table;
+catchment-mean via `data/Catchment_Boundaries` later), add
+`p_fc_lead1..3` columns, and re-run the Phase 6 forecast ladder with
+forecast rain in place of the "perfect rain" column — the forecast-skill
+number lands between ar_donor_L1 (+0.778 / −40%) and ar_perfect_L1
+(+0.859 / −28%). Then the LSTM (Taccari-style fine-tune on the forecast
+years). Test window for the GEFS track: 2010-10 → 2019-09 (9 water
+years) + 2020-10 → 2022-09.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at

@@ -84,17 +84,17 @@ def decode_gb(msg):
         ec.codes_release(h)
 
 
-def six_hour_labels(lead_days):
+def six_hour_labels(lead_days, min_lead=0):
     out = {}
-    for d in range(0, lead_days + 1):
+    for d in range(min_lead, lead_days + 1):
         h0 = 24 * d
         out[d] = [f"{h0+6*k}-{h0+6*k+6} hour acc fcst" for k in range(4)]
     return out
 
 
-def fetch_day(init, member, lead_days):
+def fetch_day(init, member, lead_days, min_lead=0):
     ymd = init.strftime("%Y%m%d")
-    labels = six_hour_labels(lead_days)
+    labels = six_hour_labels(lead_days, min_lead)
     totals, lat, lon = {}, None, None
     if init <= pd.Timestamp("2019-12-31"):
         url = f"{REFO}/{init.year}/{ymd}00/{member}/Days%3A1-10/apcp_sfc_{ymd}00_{member}.grib2"
@@ -105,13 +105,13 @@ def fetch_day(init, member, lead_days):
         missing = [lab for d in labels for lab in labels[d] if lab not in need]
         if missing:
             raise KeyError(f"idx lacks {missing[:2]} for {ymd} {member}")
-        last = max(need.values())
-        blob = get_range(url, 0, (offs[last + 1] - 1) if offs[last + 1] else None)
+        # only the 6-h records are needed: fetch each individually (half the
+        # bytes of the contiguous block; the line, not latency, is the limit)
         for d, labs in labels.items():
             acc = None
             for lab in labs:
                 i = need[lab]
-                msg = blob[offs[i]:offs[i + 1]] if offs[i + 1] else blob[offs[i]:]
+                msg = get_range(url, offs[i], (offs[i + 1] - 1) if offs[i + 1] else None)
                 arr, lat, lon = decode_gb(msg)
                 acc = arr if acc is None else acc + arr
             totals[d] = acc
@@ -137,8 +137,14 @@ def main():
     ap.add_argument("start"); ap.add_argument("end")
     ap.add_argument("--member", default="c00")
     ap.add_argument("--leads", type=int, default=3)
-    ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--min-lead", type=int, default=1,
+                    help="first lead_day to keep (default 1: skip the same-day 0-24 h total)")
+    ap.add_argument("--out", default=None, help="output dir (default cache/nwp)")
     a = ap.parse_args()
+    global OUT
+    if a.out:
+        OUT = Path(a.out); OUT.mkdir(parents=True, exist_ok=True)
     days = pd.date_range(a.start, a.end, freq="D")
     for ym, chunk in days.to_series().groupby(days.strftime("%Y%m")):
         out = OUT / f"gefs_{a.member}_{ym}.nc"
@@ -147,25 +153,28 @@ def main():
         t0 = time.time(); cube, inits, lat, lon = [], [], None, None
         from concurrent.futures import ThreadPoolExecutor
         def one(init):
-            try:
-                return init, fetch_day(init, a.member, a.leads)
-            except Exception as e:
-                print(f"  {init.date()}: FAILED ({e})", flush=True); return init, None
+            for attempt in range(3):
+                try:
+                    return init, fetch_day(init, a.member, a.leads, a.min_lead)
+                except Exception as e:
+                    err = e; time.sleep(5 * (attempt + 1))
+            print(f"  {init.date()}: FAILED ({err})", flush=True); return init, None
         with ThreadPoolExecutor(max_workers=a.workers) as ex:
             for init, res in ex.map(one, list(chunk)):
                 if res is None: continue
                 totals, lat, lon = res
-                cube.append(np.stack([totals[d] for d in range(a.leads + 1)]))
+                cube.append(np.stack([totals[d] for d in range(a.min_lead, a.leads + 1)]))
                 inits.append(init)
         if not cube:
             continue
         da = xr.DataArray(np.stack(cube), dims=("init", "lead_day", "lat", "lon"),
-                          coords={"init": inits, "lead_day": np.arange(a.leads + 1),
+                          coords={"init": inits, "lead_day": np.arange(a.min_lead, a.leads + 1),
                                   "lat": lat, "lon": lon},
                           attrs={"units": "mm/day", "member": a.member,
                                  "source": "NOAA GEFS v12 (reforecast <=2019, operational >=2020-09-23)",
                                  "convention": "lead_day d = calendar-day total for init+d, from 00Z run"})
-        da.to_dataset(name="tp").to_netcdf(out)
+        da.to_dataset(name="tp").to_netcdf(
+            out, encoding={"tp": {"zlib": True, "complevel": 4, "dtype": "float32"}})
         print(f"{ym}: {len(inits)} inits, leads 0-{a.leads}, {time.time()-t0:.0f}s -> {out.name}", flush=True)
 
 
