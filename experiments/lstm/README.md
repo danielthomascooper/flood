@@ -460,6 +460,8 @@ price of the day of lead.
 | AMAX bias | 0.0% (by construction) | −17.4% |
 | pred max, mm/day (obs 244) | 244 | 93 |
 | paired vs persistence | — | +0.253 median, better on 94% |
+| bias on the observed AMAX day | −100% + a day-late peak | −34.3% |
+| model's own AMAX within ±1 day of obs | — | 52.2% (median lag 0) |
 
 Reading: a day ahead, own flow + donors + forcings recover essentially the
 tree's *simulation* skill on ordinary days (+0.811 vs +0.820) and beat
@@ -467,4 +469,9 @@ persistence almost everywhere. On flood days the forecaster looks like the
 raw daily tree: −17% AMAX bias and a 93 mm/day ceiling. Persistence's
 0% AMAX bias is not skill — it is the peak arriving a day late — so the
 flood-day comparison to make is top-1% NSE (−1.5 vs −3.3) and, once F2
-lands, calibrated envelope coverage.
+lands, calibrated envelope coverage. Timing is the encouraging part: on
+the observed annual-max day the forecast issued the day before carries
+−34% bias (persistence, by definition, carries the previous day's flow),
+and the model's own annual maximum falls within a day of the true one in
+52% of catchment-years with a median lag of 0 days — it sees the peak
+coming, it just under-calls its size.
