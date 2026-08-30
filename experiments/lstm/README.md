@@ -429,3 +429,42 @@ rain-only and donor ladders is a within-noise tie, whereas the q50 skill
 gap (+0.88 vs +0.77) is ~40× the seed spread. Both readings of H3 stand:
 event recovery is hourly rain; point skill is donors. (Comparator caveat
 above applies to the absolute coverage levels.)
+
+## Phase 6, Arc box — forecasting (2026-08-30)
+
+`train_lstm.py --lead L --autoreg`: the window ends at issue day *t*, the
+target is flow at *t+L*, the basin's own normalised observed flow (≤ *t*)
+is an input channel, donors are at ≤ *t*, and the train/test split is on
+the target date. Output rows are dated at the target day, so `evaluate.py`
+scores them unchanged; the local scoring script builds persistence
+(flow(*t+L*) = flow(*t*)) from the daily files for the same rows.
+
+**The bar: persistence** on the 416-catchment test set — lead 1: median
+NSE **+0.538**, top-1% NSE −3.25, AMAX bias 0.0% (the peak simply arrives a
+day late); lead 3: median NSE **+0.077**, 43% of catchments negative.
+Persistence is unbeatable on AMAX *bias* by construction, so the forecast
+question is timing and flood-day skill (top-1% NSE), not bias.
+
+**F1 1-day-ahead LSTM, `--lead 1 --autoreg --donors 3 --epochs 16`**
+(`results/lstm_fc1/`; cards `results/lstm_forecast_cards.csv`, paired
+`results/lstm_forecast_vs_persistence.csv`). Val NSE(norm) +0.693 after one
+epoch, +0.764 peak, +0.759 final — ~0.12 below the lead-0 nowcast, the
+price of the day of lead.
+
+| lead 1, 416 catchments | persistence | F1 |
+|---|---|---|
+| median NSE / KGE | +0.538 / +0.769 | **+0.811 / +0.820** |
+| % catchments NSE<0 | 2.6 | 0 |
+| top-1% NSE | −3.25 | −1.51 |
+| top-1% bias | −37.7% | −32.1% |
+| AMAX bias | 0.0% (by construction) | −17.4% |
+| pred max, mm/day (obs 244) | 244 | 93 |
+| paired vs persistence | — | +0.253 median, better on 94% |
+
+Reading: a day ahead, own flow + donors + forcings recover essentially the
+tree's *simulation* skill on ordinary days (+0.811 vs +0.820) and beat
+persistence almost everywhere. On flood days the forecaster looks like the
+raw daily tree: −17% AMAX bias and a 93 mm/day ceiling. Persistence's
+0% AMAX bias is not skill — it is the peak arriving a day late — so the
+flood-day comparison to make is top-1% NSE (−1.5 vs −3.3) and, once F2
+lands, calibrated envelope coverage.

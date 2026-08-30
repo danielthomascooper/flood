@@ -1,0 +1,2 @@
+model,lead,median_NSE_model,median_NSE_persistence,paired_delta_median,frac_model_better,top1_NSE_model,top1_NSE_persistence
+F1 lead1 ar+donors,1,0.8105770647525787,0.5379087030887604,0.2531551718711853,0.9399038461538461,-1.5079641342163086,-3.251842498779297
