@@ -475,3 +475,53 @@ the observed annual-max day the forecast issued the day before carries
 and the model's own annual maximum falls within a day of the true one in
 52% of catchment-years with a median lag of 0 days — it sees the peak
 coming, it just under-calls its size.
+
+**F2 1-day-ahead quantile ladder, `--lead 1 --autoreg --donors 3 --head
+quantile --epochs 16`** (`results/lstm_fc1_q/`; cards
+`results/lstm_fc1_q_cards.csv`, calibration
+`results/lstm_fc1_q_calibration.csv`). Val NSE(norm) +0.664 → +0.755 final
+(best of the run), on a noisy +0.72–0.75 plateau from epoch 3 — the same
+ceiling as F1, reached the same way. 0 crossing rows in the ladder.
+
+| lead 1, 416 catchments | persistence | F1 (mse) | F2 q50 |
+|---|---|---|---|
+| median NSE / KGE | +0.538 / +0.769 | +0.811 / +0.820 | +0.806 / +0.770 |
+| top-1% NSE / bias | −3.25 / −37.7% | −1.51 / −32.0% | −1.54 / −33.4% |
+| AMAX bias | 0.0% | −17.4% | −19.8% |
+| pred max, mm/day (obs 244) | 244 | 93 | 84 |
+| paired vs persistence | — | +0.253, better on 94.0% | +0.248, better on 95.7% |
+| bias on the observed AMAX day | — | −34.3% | −35.2% |
+| own AMAX within ±1 day of obs | — | 52.2% | 55.1% |
+
+Calibration, fraction of obs ≤ quantile (pooled / per-catchment median /
+AMAX days), with the simulation ladder A2 in brackets:
+
+| q | nominal | pooled | per-catchment median (p10–p90) | top-1% days | AMAX days | AMAX median q/obs |
+|---|---|---|---|---|---|---|
+| q05 | 0.05 | 0.052 (0.058) | 0.042 (0.012–0.104) | 0.000 | 0.000 | 0.30 |
+| q25 | 0.25 | 0.150 (0.185) | 0.145 (0.089–0.211) | 0.030 | 0.024 | 0.53 |
+| q50 | 0.50 | 0.517 (0.444) | 0.529 (0.391–0.623) | 0.145 | 0.109 | 0.65 (0.68) |
+| q75 | 0.75 | 0.805 (0.712) | 0.808 (0.749–0.855) | 0.357 | 0.289 | 0.80 |
+| q95 | 0.95 | 0.963 (0.935) | 0.963 (0.945–0.982) | 0.665 | 0.580 (0.625) | 1.10 (1.09) |
+| q99 | 0.99 | 0.992 (0.985) | 0.992 (0.986–0.998) | 0.851 (0.872) | 0.790 (0.847) | 1.41 (1.31) |
+
+Interval widths: 50% median 0.125 mm/day, 90% 0.447 (A2 simulation ladder
+0.22 / 0.54; tree sweep 0.24 / 0.64).
+
+Reading. (1) The quantile head costs nothing on point skill a day ahead:
+q50 ties F1 on median NSE, paired skill and timing, and the 3-seed
+lesson from Phase 4 says the −0.005 is noise. (2) Conditioning on the
+basin's own flow makes the ladder both sharper and better calibrated than
+the simulation ladder: the 90% band is 17% narrower and covers 91.1%
+(q05→q95) against A2's 87.7%; q50 sits at 0.517 where A2 had drifted to
+0.444. The one miscalibration is the inner band — q25/q75 cover 65.5%
+instead of 50% — so the ladder is over-wide in the middle and honest at
+the edges. (3) On the floods themselves it is a step *less* protective
+than the simulation ladder: q99 clears the observed annual peak on 79.0%
+of catchment-years (A2 84.7%), q95 on 58.0% (62.5%), and the median
+q50/obs on AMAX days is 0.65. A day of lead removes the target-day rain
+from the inputs, and the ladder pays for that at the top. A q99 issued
+the day before a flood is still a 1.4× the-peak-will-be-here envelope
+that is right four years in five, which is the operational number the
+CPU box's C2 scoring should weigh against persistence's (by construction
+exact) 0% bias delivered a day late.
