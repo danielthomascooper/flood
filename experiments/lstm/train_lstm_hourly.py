@@ -109,6 +109,10 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--seq", type=int, default=336, help="window length in hours")
     ap.add_argument("--head", choices=["mse", "quantile"], default="mse")
+    ap.add_argument("--donors", type=int, default=3,
+                    help="hourly donor gauges per target; 0 = rain-only "
+                         "(the deconfound run: splits the pilot's gain "
+                         "between hourly rain and hourly donor flow)")
     args = ap.parse_args()
 
     torch.manual_seed(args.seed)
@@ -147,10 +151,12 @@ def main():
             for g, s in flow.items()}
 
     def donors_of(g):
+        if args.donors == 0:
+            return []
         others = [h for h in have if h != g]
         dist = [(np.hypot(ex[g] - ex[h], ny[g] - ny[h]), h) for h in others
                 if h in ex.index]
-        return [h for _, h in sorted(dist)[:K]]
+        return [h for _, h in sorted(dist)[:args.donors]]
 
     stat = STATIC.loc[targets].fillna(STATIC.median())
     s_z = ((stat - stat.mean()) / (stat.std() + 1e-6)).astype("float32")

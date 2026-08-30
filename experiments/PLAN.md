@@ -288,6 +288,44 @@ daily files — a units trap for any cross-comparison); post-2016 gradgb
 outages are zero-filled with a rain_gap flag column. The project's
 question ladder is, at this point, answered at every rung.
 
+### Phase 5 (2026-08-30): hardening + adversarial review
+
+Before the paper: make the headline numbers robust and stress-test the
+reasoning. Two hostile-reviewer passes (methodology; conclusions) are
+running on the CPU box — their findings may append runs to this list.
+
+**Arc box queue (start immediately; independent of the review):**
+
+- H1/H2 **Seed replication of the headline model** (~1.5 h each). The
+  +0.914 / top-1% +0.201 / AMAX −6.6% synthesis is a single seed, and
+  the audit showed LSTM tail metrics carry seed spread comparable to
+  model gaps:
+  `python experiments/lstm/train_lstm.py --donors 3 --epochs 16 --seed 1 --out experiments/results/lstm_nowcast_s1`
+  `python experiments/lstm/train_lstm.py --donors 3 --epochs 16 --seed 2 --out experiments/results/lstm_nowcast_s2`
+  Also copy each run's per-epoch val NSE line into the commit message —
+  we need the val curves to defend the fixed 16-epoch budget (the
+  original 8-vs-16 choice was made on test cards; the defence is
+  "fixed pre-registered budget, val curve consistent with it").
+- H3 **Hourly deconfound** (~1 h): the pilot changed hourly rain AND
+  hourly donors at once; this splits the attribution:
+  `python experiments/lstm/train_lstm_hourly.py --head quantile --donors 0 --out experiments/results/lstm_hourly_q_nodonor`
+  (train_lstm_hourly.py now takes --donors; 0 = rain-only.) The number
+  to report: daily-agg q99 coverage of the 145 pilot both-missed events
+  (was 72–77% with donors; the rain-only number attributes the recovery).
+- Commit parquets + manifests + logs as usual; push. UTF-8 only.
+
+**CPU box queue:**
+
+- C1 **Lead time + nestedness** (`hgb_nowcast_hardening.py`, 2 fits):
+  (a) donors at lag-1/lag-2 only — what one day of lead time costs the
+  nowcast result (any operational claim must state this); (b) donors at
+  ranks 2–4 with the nearest excluded — the nearest donor is the one
+  most likely up/downstream on the same river, where its flow partially
+  IS the target's flow; the network-information claim must survive
+  dropping it.
+- C2 Whatever the two adversarial reviews demand (appended when they
+  report).
+
 ### Next big build (chosen by Gate 2)
 
 The residual is information at the daily scale: both model classes'
