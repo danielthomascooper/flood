@@ -323,8 +323,23 @@ running on the CPU box — their findings may append runs to this list.
   most likely up/downstream on the same river, where its flow partially
   IS the target's flow; the network-information claim must survive
   dropping it.
-- C2 Whatever the two adversarial reviews demand (appended when they
-  report).
+- C2 Adversarial-review fixes (`analysis_review_fixes.py`) — DONE, and
+  every result strengthens the study:
+  (a) **daily-null for the hourly claim**: a daily q99 inflated to match
+  the hourly model's overall AMAX coverage captures only **4.1%** of the
+  145 both-missed events (hourly: 72–77%) — the hourly recovery is
+  information, not envelope width;
+  (b) **oracle coverage**: because AMAX days are selected on the
+  realisation, a PERFECTLY calibrated q99 of this ladder's sharpness
+  would cover only ~0.88 of them (0.81–0.90 across tail assumptions) —
+  observed 0.896 is at/above the oracle, so the daily ladder was never
+  miscalibrated on floods; it sits at its information ceiling, and
+  hourly data raises the ceiling. §3/§7 of the write-up need this
+  reframe ("coverage" → "event capture"; drop the 0.99 target);
+  (c) date-clustered 95% CI on AMAX coverage [0.883, 0.907] (742
+  distinct event dates — report this everywhere coverage is compared);
+  (d) nowcast gain is FLAT in donor distance (medians 0.056–0.058 by
+  quartile out to 43 km, Spearman −0.004): the transferability curve.
 
 **Phase 5 CPU results (C1, hgb_nowcast_hardening.py):**
 - **Nestedness: the claim survives.** Donors at ranks 2–4 (nearest
