@@ -288,6 +288,59 @@ daily files — a units trap for any cross-comparison); post-2016 gradgb
 outages are zero-filled with a rain_gap flag column. The project's
 question ladder is, at this point, answered at every rung.
 
+### Phase 5 review synthesis (2026-08-30) — corrections to the record
+
+Two adversarial reviews (methodology; conclusions) reported. Their most
+damaging findings were independently verified on this machine and are
+CORRECT. Claims change as follows:
+
+- **Hourly pilot headline CORRECTED.** The 72–77% scored the hourly
+  model against its own (hourly-aggregated) obs record, which on the
+  145 event days is median 85.5% of the daily-file obs the daily models
+  were judged on. Same-comparator rescore (q99×24 vs daily-file obs):
+  **51.7% exact-date, 64.1% ±1 day**. And "0% by construction" was a
+  rigged baseline — the weaker no-donor daily ladders already cover
+  10.3%/20.7% (union **24.8%**) of those events through model
+  diversity. Defensible claim: **64% vs a 25% third-model baseline** —
+  a 2.6× recovery, still decisively real (the C2 width-null of 4.1%
+  shows it is not envelope inflation), but not 77-vs-0.
+- **"Nowcasting closes the ungauged penalty" RETRACTED.** That compared
+  ungauged-with-donors to gauged-WITHOUT-donors. Fair comparison (both
+  with donors): median penalty **+0.048**, chalk **+0.132**. Donors
+  lift both settings; the penalty is roughly unchanged. True statement:
+  an ungauged site with donors matches a gauged site without them.
+- **Operational framing tightened**: zero lead time (C1: lag-1 donors
+  keep 14% of the gain); a zero-parameter nearest-donor rescale already
+  achieves NSE 0.715 and beats the full raw tree in 34% of catchments —
+  the floor any donor model must beat, to be reported alongside.
+  Nestedness itself is secondary (C1 drop-nearest keeps 88%; gains
+  uncorrelated with donor distance/correlation).
+- **"The limit is in the data" REFRAMED** (both reviews converged on
+  this independently): AMAX days are selected on the realisation, so a
+  perfectly calibrated q99 of this sharpness would cover ~0.88 (C2
+  oracle) — observed 0.896 is AT the oracle; the ladder sits at the
+  information ceiling of the daily feature set (not "the data"), which
+  hourly inputs raise. Also report date-clustered CIs ([0.883, 0.907])
+  and event-level (non-)overlap alongside any convergence claim.
+- Smaller mandated caveats: donor pool uses test-window availability
+  (future information in donor selection); AMAX-bias median hides a
+  near-zero mean (−1.0%) with compensating errors; top-1% NSE is a
+  fragile subset metric; the tree ladder's sort-fix makes its q99 a
+  max-of-six-fits (flatters it vs the LSTM's monotone head); hourly
+  rain-gap rows (14%) sit inside all pilot numbers; per-catchment
+  AMAX coverage is unvalidatable at n=12 events (p10 = 0.74).
+- Survives as-is (conclusions review): the Gate 1 chalk correction
+  (called "the methodological high point"), the GW shuffled null, the
+  flat shuffled-donor control, pooled/per-catchment ladder calibration,
+  the 1.42× daily-clipping measurement, the missed-event anatomy, the
+  bankfull threshold-skill reframe, and the fold-rotation heavy-tail
+  finding.
+- Still required before the paper: Arc H1/H2 (seed replication of every
+  tail headline — single-seed sign claims like top-1% +0.201 are
+  exactly what a second seed can flip), H3 (hourly deconfound), **H4
+  (NEW): a second hourly seed**, and ideally a held-back sub-window
+  (last 4 water years) rescoring of the final models only.
+
 ### Phase 5 (2026-08-30): hardening + adversarial review
 
 Before the paper: make the headline numbers robust and stress-test the
@@ -312,6 +365,8 @@ running on the CPU box — their findings may append runs to this list.
   (train_lstm_hourly.py now takes --donors; 0 = rain-only.) The number
   to report: daily-agg q99 coverage of the 145 pilot both-missed events
   (was 72–77% with donors; the rain-only number attributes the recovery).
+- H4 **Second hourly seed** (added by review): rerun A2's config with
+  `--seed 1 --out experiments/results/lstm_hourly_q_s1` after H3.
 - Commit parquets + manifests + logs as usual; push. UTF-8 only.
 
 **CPU box queue:**
