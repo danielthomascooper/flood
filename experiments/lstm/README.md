@@ -343,3 +343,57 @@ flows, so this does not by itself attribute the gain to rain intensity
 vs. finer-resolution neighbour flows; an hourly run with daily-mean rain
 (or without donors) is the discriminating follow-up. The 14% of test
 rows with `rain_gap > 0` are included above.
+
+## Phase 5, Arc box — hardening (2026-08-30)
+
+**H1/H2 seed replication of the headline donor model** (`--donors 3
+--epochs 16`, seeds 1 and 2; `results/lstm_nowcast_s1/`, `results/lstm_nowcast_s2/`;
+cards `results/lstm_nowcast_seeds_cards.csv`; per-epoch val curves in each
+run's log and commit message).
+
+| | tree nowcast | seed 0 | seed 1 | seed 2 | 3-seed mean | 3-seed ensemble |
+|---|---|---|---|---|---|---|
+| median NSE | +0.882 | +0.914 | +0.910 | +0.906 | +0.910 | **+0.917** |
+| median KGE | +0.859 | +0.891 | +0.879 | +0.871 | +0.880 | +0.886 |
+| % catchments NSE<0 | 1.9 | 0 | 0 | 0 | 0 | 0 |
+| top-1% NSE | −0.099 | +0.201 | +0.122 | +0.085 | +0.136 | +0.185 |
+| top-1% bias | −14.1% | −10.6% | −14.4% | −14.5% | −13.2% | −12.9% |
+| AMAX bias | −9.0% | −6.6% | −11.8% | −11.8% | −10.1% | −10.1% |
+| q99 dist bias | −5.4% | −2.2% | −7.1% | −7.9% | −5.7% | −5.6% |
+| paired vs nowcast tree | — | +0.021 (80%) | +0.020 (80%) | +0.017 (76%) | | |
+
+Val NSE(norm) curves are near-identical across seeds (peaks +0.883 /
++0.883 / +0.881 at epochs 11–15; the 16-epoch budget was fixed in advance
+and every curve is still flat-to-rising at the end).
+
+**Verdict.** Seed 0 was the tail outlier; seeds 1 and 2 agree with each
+other to within 0.04 top-1% NSE and 0.0 pts AMAX bias. Robust claims:
+the ordinary-day win over the nowcast tree (+0.02–0.03 median NSE, better
+on 76–80% of catchments, no failed catchments) and the top-1% NSE win (all
+seeds positive vs −0.10). **Not robust:** the AMAX-bias advantage — the
+seed mean (−10.1%) ties the nowcast tree (−9.0%). The defensible headline
+is the 3-seed ensemble mean: median NSE +0.917, top-1% NSE +0.185, AMAX
+bias −10.1%. Any tail claim in the write-up should quote the seed range,
+not seed 0.
+
+**H3 hourly deconfound, `--head quantile --donors 0`** (rain-only hourly
+pilot; `results/lstm_hourly_q_nodonor/`, slim ladder + daily aggregate
+committed as for A2; comparison table `results/hourly_deconfound.csv`).
+q50 val NSE(norm) +0.725 peak, +0.705 final (donor version +0.805).
+
+| 60 pilot catchments, 145 both-missed events | hourly + donors (A2) | **rain only (H3)** |
+|---|---|---|
+| daily-agg q99 ≥ obs on the event day | 76.6% | **75.2%** |
+| hourly q99 (max over day) ≥ hourly peak | 69.0% | **70.3%** |
+| all pilot AMAX days, hourly q99 ≥ peak | 94.2% | 96.7% |
+| median q99 / obs on the events | 1.21 | 1.34 |
+| daily-agg q50 median NSE | +0.880 | +0.772 |
+| daily-agg q50 AMAX bias | −18.0% | −12.6% |
+
+**Attribution.** The pilot's event recovery is a property of hourly
+*rain*, not of hourly donor flows: without any neighbour-gauge input the
+envelope still covers three-quarters of the events every daily model
+missed, at slightly lower sharpness (q99 sits 1.34× obs instead of
+1.21×). Donors buy point skill (q50 NSE +0.11) and a tighter ladder, not
+event coverage. This is the cleaner claim for the write-up — it does not
+depend on the donor network being available at an ungauged site.

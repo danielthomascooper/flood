@@ -369,6 +369,16 @@ running on the CPU box — their findings may append runs to this list.
   `--seed 1 --out experiments/results/lstm_hourly_q_s1` after H3.
 - Commit parquets + manifests + logs as usual; push. UTF-8 only.
 
+**Arc box status (2026-08-30 am): H1, H2 DONE and committed; H3 running.**
+Seed 0 was the tail outlier: seeds 1/2 give median NSE +0.910/+0.906,
+top-1% NSE +0.122/+0.085, AMAX bias −11.8%/−11.8% (seed 0: +0.914 /
++0.201 / −6.6%). Robust vs the nowcast tree: ordinary days (+0.02–0.03,
+better on 76–80%) and top-1% NSE (all seeds positive vs −0.10). Not
+robust: AMAX bias (seed mean −10.1% ties the tree's −9.0%). Headline to
+quote: 3-seed ensemble mean +0.917 / +0.185 / −10.1%
+(`results/lstm_nowcast_seeds_cards.csv`; val curves in commit messages).
+H3 DONE: rain-only hourly ladder covers 75.2% of the 145 pilot both-missed events on daily aggregates (with donors 76.6%), 70.3% at hourly peak (69.0%), at lower sharpness (q99/obs 1.34 vs 1.21) — the event recovery is attributable to hourly rain, not donors; donors buy q50 skill (+0.880 vs +0.772). `results/hourly_deconfound.csv`. All three Phase 5 Arc runs committed and pushed.
+
 **CPU box queue:**
 
 - C1 **Lead time + nestedness** (`hgb_nowcast_hardening.py`, 2 fits):
