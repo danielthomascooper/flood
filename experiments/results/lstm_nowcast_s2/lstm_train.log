@@ -1,0 +1,23 @@
+device: xpu
+loading 416 basins...
+donor features: 3 nearest gauges (2x3 columns per basin)
+windows: 5,429,158 train / 454,550 val / 1,819,212 test
+epoch 0: loss 0.2231  val NSE(norm) +0.823  407s
+epoch 1: loss 0.1611  val NSE(norm) +0.839  405s
+epoch 2: loss 0.1584  val NSE(norm) +0.848  408s
+epoch 3: loss 0.1365  val NSE(norm) +0.869  405s
+epoch 4: loss 0.1371  val NSE(norm) +0.867  408s
+epoch 5: loss 0.1274  val NSE(norm) +0.870  405s
+epoch 6: loss 0.1277  val NSE(norm) +0.856  405s
+epoch 7: loss 0.1272  val NSE(norm) +0.875  405s
+epoch 8: loss 0.1176  val NSE(norm) +0.876  405s
+epoch 9: loss 0.1160  val NSE(norm) +0.872  405s
+epoch 10: loss 0.1147  val NSE(norm) +0.881  405s
+epoch 11: loss 0.1133  val NSE(norm) +0.872  405s
+epoch 12: loss 0.1182  val NSE(norm) +0.879  406s
+epoch 13: loss 0.1164  val NSE(norm) +0.871  409s
+epoch 14: loss 0.1232  val NSE(norm) +0.871  405s
+epoch 15: loss 0.1079  val NSE(norm) +0.874  415s
+test inference...
+wrote experiments\results\lstm_nowcast_s2\lstm_test_predictions.parquet (1,819,212 rows)
+score it back on the main machine with experiments/evaluate.py
