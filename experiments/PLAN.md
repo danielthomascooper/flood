@@ -389,7 +389,18 @@ for us)**.
 median catchment; orographic and convective rain under-resolved. The
 tree's perfect-rain run (+0.859 / −28%) is the ceiling no archive reaches.
 
-**Status (2026-08-30 evening):** Track B pull RUNNING on the CPU box —
+**Track A status (2026-08-30 night):** licence accepted, one-date test
+verified (50 members, 0.5°, tp in mm; spatial r = 0.94 vs GEFS control
+at lead 1). ECDS serialises requests per user (no concurrency speedup),
+so the full window is a ~1–2 week drip. It runs as a **systemd user
+service** (`scripts/tigge-pull.service` installed at
+`~/.config/systemd/user/`, linger enabled): survives reboots, connection
+loss and crashes; monthly chunks are skipped once their `.nc` exists.
+Priority order: the 2020-01→09 hole first, then the whole 2010–2022
+window. Log: `cache/nwp/tigge/pull.log`; manage with
+`systemctl --user {status,stop,start} tigge-pull`.
+
+**Track B status (2026-08-30 evening):** Track B pull RUNNING on the CPU box —
 control member, leads 1–3, 2010-10-01 → 2019-12-31 then 2020-09-23 →
 2022-09-30, ~4 MB/day at this box's 0.55 MB/s line ≈ 9–10 h, into
 `cache/nwp/gefs_c00_YYYYMM.nc` (zlib, ~1 MB/month). Monthly cubes are

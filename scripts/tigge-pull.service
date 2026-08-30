@@ -1,0 +1,14 @@
+[Unit]
+Description=TIGGE ECMWF precipitation drip-pull (resume-safe)
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/habrt/source/flood/scripts/tigge_pull.sh
+Restart=on-failure
+RestartSec=120
+StandardOutput=append:/home/habrt/source/flood/cache/nwp/tigge/pull.log
+StandardError=append:/home/habrt/source/flood/cache/nwp/tigge/pull.log
+
+[Install]
+WantedBy=default.target
