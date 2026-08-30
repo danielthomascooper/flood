@@ -1,0 +1,22 @@
+device: xpu
+loading 416 basins...
+windows: 5,428,783 train / 454,550 val / 1,819,212 test
+epoch 0: loss 0.3170  val NSE(norm) +0.690  251s
+epoch 1: loss 0.2729  val NSE(norm) +0.714  253s
+epoch 2: loss 0.2660  val NSE(norm) +0.722  248s
+epoch 3: loss 0.2500  val NSE(norm) +0.727  249s
+epoch 4: loss 0.2399  val NSE(norm) +0.743  253s
+epoch 5: loss 0.2377  val NSE(norm) +0.736  249s
+epoch 6: loss 0.2378  val NSE(norm) +0.751  249s
+epoch 7: loss 0.2316  val NSE(norm) +0.732  249s
+epoch 8: loss 0.2348  val NSE(norm) +0.733  253s
+epoch 9: loss 0.2244  val NSE(norm) +0.739  249s
+epoch 10: loss 0.2276  val NSE(norm) +0.744  249s
+epoch 11: loss 0.2274  val NSE(norm) +0.759  252s
+epoch 12: loss 0.2291  val NSE(norm) +0.745  249s
+epoch 13: loss 0.2219  val NSE(norm) +0.741  249s
+epoch 14: loss 0.2227  val NSE(norm) +0.752  249s
+epoch 15: loss 0.2291  val NSE(norm) +0.762  249s
+test inference...
+wrote experiments\results\lstm_fc1_nodonor\lstm_test_predictions.parquet (1,819,212 rows)
+score it back on the main machine with experiments/evaluate.py

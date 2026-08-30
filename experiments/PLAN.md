@@ -419,6 +419,41 @@ the year's max observation regardless of timing, so persistence scores
 bias (pred on the observed AMAX day / obs) and timing, as above —
 `analysis_forecast_skill.py` does this for any forecast parquet.
 
+**Arc box status (2026-08-30, 15:00): F1, F2, F3, F4 all DONE, committed and
+pushed** (55d67a0, 9aff85a, d49b053, 918ea82 and the F4 commit). Parquets + manifests
++ logs in `results/lstm_fc1`, `lstm_fc1_q`, `lstm_fc3`, `lstm_fc1_nodonor`;
+cards `results/lstm_forecast_cards.csv`, paired skill + peak timing
+`results/lstm_forecast_vs_persistence.csv`, F2 ladder
+`results/lstm_fc1_q_cards.csv` / `lstm_fc1_q_calibration.csv`. Findings in
+`lstm/README.md` ("Phase 6, Arc box"), with the C1 tree rows alongside.
+Local persistence scoring reproduces C1's bar exactly (+0.538 / +0.077).
+
+- F1 (lead 1, own flow + donors): median NSE **+0.811** vs persistence
+  +0.538 and tree ar_donor +0.778 — the LSTM keeps its +0.03 simulation
+  margin over the tree a day ahead; paired +0.253, better on 94%; top-1%
+  NSE −1.51 (persistence −3.25, tree −2.15); AMAX bias −17.4%; peak-day
+  bias −34% (tree −40%); own AMAX within ±1 day 52% (tree 50%).
+- F2 (quantile head): q50 +0.806 ties F1; the ladder is near-nominal
+  pooled (q50 .517, q95 .963, q99 .992) and 17% sharper than the A2
+  simulation ladder, but q99 clears the observed annual peak on 79% of
+  catchment-years vs A2's 85% — a day of lead costs the envelope at the
+  top.
+- F3 (lead 3): +0.388 vs persistence +0.077 — ties the tree's +0.390;
+  flood-blind exactly as the tree is (AMAX −54%, peak-day −76%, own AMAX
+  within ±1 day 4.9%, median lag +2 d). Lead 3 is rain-forecast-bound.
+- F4 (lead 1, no donors): **+0.813** matches or edges F1 (+0.811) on every
+  column (top-1% NSE -1.34 vs -1.51, AMAX -16.4% vs -17.4%, own-peak timing
+  53% vs 52%, better than persistence on 96%): donors add nothing at lead 1
+  for the LSTM, exactly as for the tree (C1 +0.001). Own flow at t already
+  carries what the neighbours know; in simulation donors were a proxy for
+  the withheld own flow. The operational forecaster needs no gauge network.
+
+Verdict for C2: at lead 1 the LSTM is the better point forecaster by the
+same margin as in simulation and its quantile ladder is the operational
+object; beyond lead 1 model class stops mattering. Compare forecasters on
+top-1% NSE, peak-day bias and AMAX timing — never on `AMAX_bias_pct`,
+where persistence is 0% by construction.
+
 ### Phase 5 review synthesis (2026-08-30) — corrections to the record
 
 Two adversarial reviews (methodology; conclusions) reported. Their most

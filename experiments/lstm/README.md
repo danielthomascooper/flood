@@ -561,3 +561,36 @@ the peak rather than merely mistiming it. F1 → F3 loses 0.42 of median
 NSE and 0.47 of AMAX-timing hit rate for two extra days of lead, on the
 same inputs; the CPU box's perfect-rain ceiling says where that skill
 went. Rain forecasts, not model class, are the lead-3 constraint.
+
+**F4 1-day-ahead LSTM without donors, `--lead 1 --autoreg --epochs 16`**
+(`results/lstm_fc1_nodonor/`; same card and paired CSVs). Val NSE(norm) +0.690 after one epoch, +0.762 final (best of the run and the highest of any lead-1 run; F1 peaked at +0.764, final +0.759).
+
+| lead 1, 416 catchments | persistence | tree, own flow (CPU box C1) | tree + donors | F4 (own flow) | F1 (+ donors) |
+|---|---|---|---|---|---|
+| median NSE / KGE | +0.538 / +0.769 | +0.779 / — | +0.778 / — | **+0.813 / +0.831** | +0.811 / +0.820 |
+| % catchments NSE<0 | 2.6 | — | — | 0.0 | 0.0 |
+| top-1% NSE | −3.25 | −2.10 | −2.15 | −1.34 | −1.51 |
+| top-1% bias | −37.7% | — | — | −29.2% | −32.0% |
+| AMAX bias | 0.0% (by construction) | −19.0% | −18.9% | −16.4% | −17.4% |
+| pred max, mm/day (obs 244) | 244 | — | — | 86 | 93 |
+| paired vs persistence | — | — | — | +0.253, better on 96.2% | +0.253, better on 94.0% |
+| bias on the observed AMAX day | −54% | −40% | −40% | −34.1% | −34.3% |
+| own AMAX within ±1 day of obs | 100% (by construction) | 50% | 50% | 53.1% (median lag +0 d) | 52.2% |
+
+Reading: donors are worth nothing to the LSTM a day ahead. F4 without
+them matches or edges F1 on every column — +0.813 vs +0.811 median NSE,
+top-1% NSE −1.34 vs −1.51, AMAX bias −16.4% vs −17.4%, own-peak timing
+53% vs 52% — differences inside the ±0.02 seed noise Phase 5 measured,
+but never behind. That is the tree's C1 result (+0.001 for donors at
+lead 1) reproduced in the LSTM. The mechanism is the one Phase 5 C1
+suggested: once the basin's own flow at *t* is an input, the neighbours'
+flow at *t* is the same signal seen from next door and carries nothing
+extra about *t+1*. In simulation (Phase 3) donors were the best single
+addition precisely because own flow was withheld — they were a proxy for
+it. Forecasting admits the real thing and the proxy becomes redundant.
+
+Practical consequence: the operational 1-day forecaster needs no gauge
+network — own flow + forcings + the quantile head — and the donor
+infrastructure belongs to the simulation / gap-filling use case, not the
+forecast one. The rain forecast (the CPU box's +0.859 ceiling with actual
+next-day rain) is the only lever left at lead 1.
