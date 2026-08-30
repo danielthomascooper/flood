@@ -352,6 +352,43 @@ daily files — a units trap for any cross-comparison); post-2016 gradgb
 outages are zero-filled with a rain_gap flag column. The project's
 question ladder is, at this point, answered at every rung.
 
+### Phase 7 data (2026-08-30): archived rainfall forecasts for GB
+
+Phase 6 showed the rainfall forecast is the binding constraint. Survey of
+archived NWP precipitation forecasts covering 2010-10 → 2022-09 (research
+agent, 99 sources, verified locally where possible):
+
+| Source | Window | Grid | Members | Licence | Access | Verdict |
+|---|---|---|---|---|---|---|
+| **ECMWF TIGGE via ECDS** | 2006-10 → now, full window | 0.5°/0.25° on request | 50+1 (ECMWF), UKMO 17+1, NCEP 30+1 | CC BY 4.0 (ECMWF/UKMO/NCEP) | free ECMWF account + licence click; `cdsapi` ≥0.7.7; server-side `area`+`grid` → **~1 GB** for the window | **best data**; risks: tape queue (hours/date), one Apr-2026 non-Member-State rejection report, 710 lost `cf/sfc` dates 2006–19 (use pf members). Old `ecmfwapi` WebAPI decommissioned 27 May 2026. |
+| **NOAA GEFS v12 reforecast (AWS)** | 2000-01 → 2019-12 | 0.25° native | c00 + p01–p04 | public domain | none; `.idx` byte ranges, **proven from this box** | consistent model; 23 GB transfer (c00, lead 1) / 61 GB (leads ≤3); UK crop kept ≈ MB |
+| GEFS v12 operational (AWS) | 2020-09-23 → now | 0.25° | 31 | public domain | same mechanics (`pgrb2sp25`, APCP 6-h) | fills 2020-10 → 2022-09; **gap 2020-01 → 09** (v11 at 1° only) |
+| Met Office MOGREPS-UK legacy S3 | 2013-01 → 2017-01 | 2.2 km | 12 × 4/day | non-commercial | whole files, ~12 GB/day | case studies only |
+| Met Office UKV/Global via CEDA | 2016-03+ / 2012+ | 1.5 km / 17–25 km | det. | NERC academic/govt only | JASMIN | not for a personal/commercial user |
+| ECMWF open data, DataHub, ERA5 "forecast" tp, S2S, EFAS/GloFAS reforecasts | none usable in window | | | | | excluded |
+
+Precedents for the observed-vs-forecast rain mismatch: Nearing 2024
+(ERA5-Land imputation), Hunt 2022 (accept the bias), Sharma 2023
+(residual postprocessor on GEFSRv2), **Taccari 2026 (pre-train on
+observed rain, fine-tune on the forecast archive — the cleanest template
+for us)**.
+
+**Decision — two tracks:**
+- Track A (user): register at https://ecds.ecmwf.int, accept the TIGGE
+  licence, put the token in `~/.cdsapirc`, and test ONE date
+  (`tigge-forecasts`, origin ecmwf, total_precipitation, pf, area
+  [61,-11,49,2], grid 0.5/0.5, leadtime 24/48/72/96). If it returns, the
+  whole window is ~1 GB in one-date-per-request jobs.
+- Track B (this box, no registration): `experiments/nwp/fetch_gefs.py`
+  pulls GEFS v12 c00 (+ members) by byte range, crops the GB box, writes
+  monthly netCDF cubes (init × lead_day × lat × lon, mm/day) to
+  `cache/nwp/`. Convention: 00Z run of issue day t; lead_day 1 = 24–48 h
+  = calendar-day total for t+1. Resume-safe. Smoke-tested on Jan 2012.
+
+**Resolution caveat** (any global NWP): 0.25° ≈ 450 km² at 55°N, 3× the
+median catchment; orographic and convective rain under-resolved. The
+tree's perfect-rain run (+0.859 / −28%) is the ceiling no archive reaches.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
