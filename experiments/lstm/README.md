@@ -407,3 +407,25 @@ ladder-union baseline — a ~2.6× recovery, not "77 vs 0". The H3
 *comparison* (rain-only vs donors) is unaffected because both runs use
 the same scoring; the absolute level should be quoted from the review's
 same-comparator numbers.
+
+**H4 second hourly seed, `--head quantile --seed 1`** (added by the review;
+`results/lstm_hourly_q_s1/`, slim ladder + daily aggregate committed; third
+row of `results/hourly_deconfound.csv`). q50 val NSE(norm) +0.818 peak,
++0.808 final (seed 0: +0.806 / +0.805).
+
+| 60 pilot catchments, 145 both-missed events | donors, seed 0 (A2) | **donors, seed 1 (H4)** | rain only (H3) |
+|---|---|---|---|
+| daily-agg q99 ≥ obs on the event day | 76.6% | **75.2%** | 75.2% |
+| hourly q99 (max over day) ≥ hourly peak | 69.0% | **66.2%** | 70.3% |
+| all pilot AMAX days, hourly q99 ≥ peak | 94.2% | 92.9% | 96.7% |
+| median q99 / obs on the events | 1.21 | 1.19 | 1.34 |
+| daily-agg q50 median NSE | +0.880 | **+0.883** | +0.772 |
+| daily-agg q50 AMAX bias | −18.0% | −18.8% | −12.6% |
+
+The hourly pilot replicates across seeds to within 1.5 pp on daily-agg
+event coverage and 3 pp at hourly peak; the seed spread (1.4 pp) equals
+the donors-vs-rain-only gap (1.4 pp), so the equal event coverage of the
+rain-only and donor ladders is a within-noise tie, whereas the q50 skill
+gap (+0.88 vs +0.77) is ~40× the seed spread. Both readings of H3 stand:
+event recovery is hourly rain; point skill is donors. (Comparator caveat
+above applies to the absolute coverage levels.)

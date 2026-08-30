@@ -1,0 +1,17 @@
+device: xpu
+loading 198 hourly files (60 targets + donors)...
+  loaded in 36s
+windows: 8,746,212 train / 1,578,742 val / 6,280,862 test
+epoch 0: loss 0.0674  val NSE(norm) +0.740  290s
+epoch 1: loss 0.0498  val NSE(norm) +0.775  282s
+epoch 2: loss 0.0452  val NSE(norm) +0.779  282s
+epoch 3: loss 0.0432  val NSE(norm) +0.787  286s
+epoch 4: loss 0.0414  val NSE(norm) +0.818  283s
+epoch 5: loss 0.0401  val NSE(norm) +0.810  282s
+epoch 6: loss 0.0394  val NSE(norm) +0.779  289s
+epoch 7: loss 0.0384  val NSE(norm) +0.812  293s
+epoch 8: loss 0.0378  val NSE(norm) +0.810  284s
+epoch 9: loss 0.0375  val NSE(norm) +0.808  282s
+test inference...
+wrote experiments\results\lstm_hourly_q_s1/lstm_hourly_test_predictions.parquet (6,280,862 rows) + lstm_hourly_daily_agg.parquet
+score on the main machine: evaluate.py on the daily agg; hourly AMAX capture vs the missed-events list
