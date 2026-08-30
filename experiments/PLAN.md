@@ -326,6 +326,18 @@ running on the CPU box — their findings may append runs to this list.
 - C2 Whatever the two adversarial reviews demand (appended when they
   report).
 
+**Phase 5 CPU results (C1, hgb_nowcast_hardening.py):**
+- **Nestedness: the claim survives.** Donors at ranks 2–4 (nearest
+  excluded) retain 88% of the nowcast NSE gain (paired median +0.050 vs
+  +0.057) and AMAX bias −10.4% (full nowcast −9.0%, raw −17.4%). The
+  gain is network information, not self-measurement through a nested
+  gauge.
+- **Lead time: the value is same-day.** Lag-1/2-only donors retain 14%
+  of the NSE gain and AMAX −16.2% — with one day of lead the donor
+  advantage essentially vanishes at daily resolution. All operational
+  framing must say nowcasting, not forecasting; the flood-day
+  information problem returns as soon as lead time is required.
+
 ### Next big build (chosen by Gate 2)
 
 The residual is information at the daily scale: both model classes'
