@@ -175,7 +175,7 @@ def main():
                                  "convention": "lead_day d = calendar-day total for init+d, from 00Z run"})
         da.to_dataset(name="tp").to_netcdf(
             out, encoding={"tp": {"zlib": True, "complevel": 4, "dtype": "float32"}})
-        print(f"{ym}: {len(inits)} inits, leads 0-{a.leads}, {time.time()-t0:.0f}s -> {out.name}", flush=True)
+        print(f"{ym}: {len(inits)} inits, leads {a.min_lead}-{a.leads}, {time.time()-t0:.0f}s -> {out.name}", flush=True)
 
 
 if __name__ == "__main__":
