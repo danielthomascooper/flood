@@ -397,3 +397,13 @@ missed, at slightly lower sharpness (q99 sits 1.34× obs instead of
 1.21×). Donors buy point skill (q50 NSE +0.11) and a tighter ladder, not
 event coverage. This is the cleaner claim for the write-up — it does not
 depend on the donor network being available at an ungauged site.
+
+*Comparator caveat (from the Phase 5 review synthesis, commit 5c10420):*
+the 72–77% and 75% figures above are scored against the hourly product's
+own observations, which run at a median 85.5% of the daily-file obs on
+those event days; scored like-for-like against the daily obs the donor
+pilot covers 51.7% exact / 64.1% ±1 day, against a 24.8% no-donor
+ladder-union baseline — a ~2.6× recovery, not "77 vs 0". The H3
+*comparison* (rain-only vs donors) is unaffected because both runs use
+the same scoring; the absolute level should be quoted from the review's
+same-comparator numbers.
