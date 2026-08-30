@@ -377,7 +377,7 @@ better on 76–80%) and top-1% NSE (all seeds positive vs −0.10). Not
 robust: AMAX bias (seed mean −10.1% ties the tree's −9.0%). Headline to
 quote: 3-seed ensemble mean +0.917 / +0.185 / −10.1%
 (`results/lstm_nowcast_seeds_cards.csv`; val curves in commit messages).
-H3 DONE: rain-only hourly ladder covers 75.2% of the 145 pilot both-missed events on daily aggregates (with donors 76.6%), 70.3% at hourly peak (69.0%), at lower sharpness (q99/obs 1.34 vs 1.21) — the event recovery is attributable to hourly rain, not donors; donors buy q50 skill (+0.880 vs +0.772). `results/hourly_deconfound.csv`. All three Phase 5 Arc runs committed and pushed.
+H3 DONE: rain-only hourly ladder covers 75.2% of the 145 pilot both-missed events on daily aggregates (with donors 76.6%), 70.3% at hourly peak (69.0%), at lower sharpness (q99/obs 1.34 vs 1.21) — the event recovery is attributable to hourly rain, not donors; donors buy q50 skill (+0.880 vs +0.772). `results/hourly_deconfound.csv`. All three Phase 5 Arc runs committed and pushed. H4 DONE (second hourly seed): daily-agg event coverage 75.2% (seed 0 76.6%), hourly peak 66.2% (69.0%), q50 NSE +0.883 (+0.880) — the 1.4 pp seed spread equals the donors-vs-rain-only gap, so the envelope tie is within noise while the point-skill gap (+0.88 vs +0.77) is ~40× it. `results/hourly_deconfound.csv` has all three rows. Arc queue empty (2026-08-30 08:00).
 
 **CPU box queue:**
 
