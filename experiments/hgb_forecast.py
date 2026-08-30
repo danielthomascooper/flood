@@ -94,27 +94,48 @@ def split(L, cols):
             tgt[te].values, GID[te], DATA.loc[te, "y_now"].values, dates[te])
 
 
-preds, rows = {}, []
-for name, L, cols in VARIANTS:
+
+# ---- run mode: one variant per process (OOM-safe), resumable -------------
+import gc
+MODE = sys.argv[2] if len(sys.argv) > 2 else "all"
+
+
+def run_variant(name, L, cols):
     key = f"{name}_L{L}"
+    out_p = SCRATCH / f"forecast_{key}.parquet"
+    if out_p.exists():
+        print(f"  {key}: exists, skipping", flush=True)
+        return
     Xtr, ytr, Xte, yte, gte, ynow, dte = split(L, cols)
     t0 = time.time()
     m = HistGradientBoostingRegressor(**BASE).fit(Xtr, ytr)
+    idx = pd.DatetimeIndex(dte, name="date") + pd.Timedelta(days=L)
     res = pd.DataFrame({"gid": gte, "obs": yte,
                         "pred": np.clip(m.predict(Xte), 0, None).astype("float32")},
-                       index=pd.DatetimeIndex(dte, name="date") + pd.Timedelta(days=L))
-    res.to_parquet(SCRATCH / f"forecast_{key}.parquet")
-    preds[key] = res
-    if f"persistence_L{L}" not in preds:
-        preds[f"persistence_L{L}"] = pd.DataFrame(
-            {"gid": gte, "obs": yte, "pred": ynow.astype("float32")}, index=res.index)
+                       index=idx)
+    res.to_parquet(out_p)
+    pp = SCRATCH / f"forecast_persistence_L{L}.parquet"
+    if not pp.exists():
+        pd.DataFrame({"gid": gte, "obs": yte, "pred": ynow.astype("float32")},
+                     index=idx).to_parquet(pp)
     print(f"  {key}: fitted in {time.time()-t0:.0f}s", flush=True)
+    del Xtr, Xte, m, res; gc.collect()
 
-preds["ar_donor_L1"].to_parquet(OUT / "forecast_L1_test_predictions.parquet")
+
+if MODE != "score":
+    todo = VARIANTS if MODE == "all" else [v for v in VARIANTS if f"{v[0]}_L{v[1]}" == MODE]
+    for name, L, cols in todo:
+        run_variant(name, L, cols)
+    if MODE != "all":
+        sys.exit(0)
+
+# ---- score mode: everything from parquets ---------------------------------
+del DATA; gc.collect()
 order = ["persistence_L1", "weather_L1", "ar_L1", "ar_donor_L1", "ar_perfect_L1",
          "persistence_L2", "ar_donor_L2", "persistence_L3", "ar_donor_L3"]
-for k in order:
-    rows.append(evaluate(preds[k], k)[0])
+preds = {k: pd.read_parquet(SCRATCH / f"forecast_{k}.parquet") for k in order}
+preds["ar_donor_L1"].to_parquet(OUT / "forecast_L1_test_predictions.parquet")
+rows = [evaluate(preds[k], k)[0] for k in order]
 print()
 df = report(rows)
 df.to_csv(OUT / "forecast_cards.csv")

@@ -393,6 +393,32 @@ flow(t)), the bar every river forecaster must beat.
 Known scope: no NWP rainfall forecasts here — "weather" variants use rain
 up to t only; ar_perfect uses the *observed* rain on t+1 as the ceiling.
 
+**Phase 6 CPU results (tree, `hgb_forecast.py`; cards in
+`results/forecast_cards.csv`):**
+
+| lead 1 day | median NSE | top-1% NSE | AMAX bias (year-max) | peak-day bias | own-max ±1 d |
+|---|---|---|---|---|---|
+| persistence | +0.538 | −3.25 | 0% (artifact) | **−54%** | 100% (artifact) |
+| weather only | +0.702 | −2.58 | −22.5% | −43% | 47% |
+| + own flow (ar) | +0.779 | −2.10 | −19.0% | −40% | 50% |
+| + donors | +0.778 | −2.15 | −18.9% | −40% | 50% |
+| + actual rain on t+1 | **+0.859** | −0.59 | −15.0% | **−28%** | 57% |
+| ar_donor, lead 2 | +0.485 | −5.6 | −47% | −73% | 20% |
+| ar_donor, lead 3 | +0.390 | −6.6 | −54% | −77% | 3% |
+
+Readings: (i) own-flow autoregression is worth +0.08 NSE over
+weather-only and is the main forecast ingredient; (ii) **donors add
+nothing at lead 1** (+0.001) — consistent with Phase 5 C1; (iii) the
+**rainfall forecast is the binding constraint**: the observed next-day
+rain adds +0.08 NSE and takes peak-day bias from −40% to −28%, restoring
+roughly the simulation LSTM's skill (+0.859 vs +0.855); (iv) beyond
+lead 1 nothing sees a flood without rain forecasts. (v) **Metric
+warning:** `evaluate.amax_bias` compares the year's max prediction with
+the year's max observation regardless of timing, so persistence scores
+0% while being a day late on every peak; for forecasts report peak-day
+bias (pred on the observed AMAX day / obs) and timing, as above —
+`analysis_forecast_skill.py` does this for any forecast parquet.
+
 ### Phase 5 review synthesis (2026-08-30) — corrections to the record
 
 Two adversarial reviews (methodology; conclusions) reported. Their most
