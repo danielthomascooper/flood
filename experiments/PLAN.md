@@ -387,8 +387,38 @@ flow(t)), the bar every river forecaster must beat.
   + own flow (ar), + donors (ar_donor), + actual rain on t+1 (ar_perfect
   = perfect-rainfall-forecast ceiling); ar_donor at L=2, 3. Standard card
   + paired skill vs persistence + AMAX bias by lead.
-- C2 (after Arc results): score the LSTM forecasters vs persistence with
-  the same script logic; flood-day skill by lead is the headline table.
+- C2 DONE — Arc F1–F4 scored with `analysis_forecast_skill.py` (fan-out
+  bug fixed: never `.loc` on the non-unique date index); every Arc
+  number reproduces. `results/forecast_skill_L1.csv`, `_L3.csv`.
+
+**Phase 6 verdict (2026-08-30) — forecasting, both boxes:**
+
+| lead 1 day | median NSE | beats persistence | peak-day bias | own-max ±1 d |
+|---|---|---|---|---|
+| persistence | +0.538 | — | −54% | — |
+| tree, own flow + donors | +0.778 | 87% | −40% | 50% |
+| LSTM, own flow + donors (F1) | +0.811 | 94% | −34% | 52% |
+| LSTM, own flow, no donors (F4) | **+0.813** | 96% | −34% | 53% |
+| LSTM quantile q50 (F2) | +0.806 | 96% | −35% | 55% |
+| tree + actual next-day rain (ceiling) | +0.859 | 87% | −28% | 57% |
+| lead 3: tree / LSTM | +0.390 / +0.388 | 91% / 95% | −77% / −76% | 3% / 5% |
+
+1. A real 1-day-ahead forecaster exists: LSTM with the basin's own past
+   flow, +0.81 median NSE, better than persistence on 94–96% of
+   catchments, no failed catchments. The normalisation advantage over
+   the tree (+0.03) survives into forecasting.
+2. **Donors add nothing at any lead ≥ 1** in either family (F4 edges F1;
+   tree +0.001). The nowcasting result is strictly a same-day result.
+3. **Floods a day ahead are 34–40% low on the peak day** for every model
+   without a rainfall forecast; the observed next-day rain (a perfect
+   forecast) takes the tree to +0.859 / −28%. The binding constraint is
+   the rainfall forecast, not the model — next step is NWP-driven inputs.
+4. At 3 days nothing sees a flood (−76%, timing hits 3–5%); the LSTM and
+   tree tie exactly there — lead-3 skill is entirely rain-forecast-bound.
+5. The 1-day quantile ladder is the operational object: pooled q99 0.992,
+   90% width 0.45 mm/day (sharper than the simulation ladder's 0.54),
+   zero crossings, and **q99 ≥ the observed annual peak on 79% of AMAX
+   days one day ahead** (simulation ladder: 85%).
 
 Known scope: no NWP rainfall forecasts here — "weather" variants use rain
 up to t only; ar_perfect uses the *observed* rain on t+1 as the ceiling.

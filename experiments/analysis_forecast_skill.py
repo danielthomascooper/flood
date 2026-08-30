@@ -26,13 +26,18 @@ flows = pd.read_parquet(ROOT / "cache" / "daily_discharge_spec.parquet")
 
 
 def persistence_for(res):
-    """pred(t) = obs(t - LEAD), aligned to the model's own rows."""
-    out = res[["gid", "obs"]].copy()
-    src = flows.shift(LEAD)                       # value LEAD days earlier
-    out["pred"] = [src.at[d, g] if (d in src.index and g in src.columns) else np.nan
-                   for d, g in zip(res.index, res.gid)]
-    out["pred"] = out["pred"].astype("float32")
-    return out.dropna(subset=["pred"])
+    """pred(t) = obs(t - LEAD), aligned positionally to the model's rows.
+    Returns (persistence frame, boolean mask of rows where it exists). Never
+    .loc on the date index: it is non-unique (416 rows per date) and fans
+    out - that OOM-killed the first version of this script."""
+    src = flows.shift(LEAD).stack()               # (date, gid) -> value LEAD days earlier
+    src.index.names = ["date", "gid"]
+    key = pd.MultiIndex.from_arrays([res.index, res.gid.values], names=["date", "gid"])
+    vals = src.reindex(key).to_numpy("float32")
+    mask = ~np.isnan(vals) & ~np.isnan(res.obs.to_numpy())
+    out = pd.DataFrame({"gid": res.gid.values[mask], "obs": res.obs.values[mask],
+                        "pred": vals[mask]}, index=res.index[mask])
+    return out, mask
 
 
 def peak_day(res):
@@ -52,8 +57,8 @@ rows, extra = [], []
 for p in paths:
     res = pd.read_parquet(p)
     name = p.parent.name if p.name.startswith("lstm") else p.stem
-    pers = persistence_for(res)
-    res = res.loc[pers.index] if len(pers) < len(res) else res
+    pers, mask = persistence_for(res)
+    res = res[mask]
     for label, r in [(f"persistence_L{LEAD}", pers), (name, res)]:
         if any(x["model"] == label for x in rows):
             continue

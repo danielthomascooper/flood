@@ -504,6 +504,42 @@ seeds, not a study.</p>
 </section>
 
 <section class="col">
+<h2><span class="no">§7½</span>From explaining floods to predicting them</h2>
+<p>Everything above estimates today's flow from today's information. The
+last experiment moved the target one and three days into the future, added
+the one input a forecaster uses first — the river's own recent flow — and
+judged every model against persistence (tomorrow's flow equals today's).</p>
+</section>
+
+<div class="tbl-wrap"><table>
+<caption>One day ahead, no rainfall forecast (peak-day bias = prediction on the observed annual-peak day)</caption>
+<tr><th>Model</th><th>Median NSE</th><th>Beats persistence</th><th>Peak-day bias</th></tr>
+<tr><td>Persistence</td><td>+0.538</td><td>—</td><td>−54%</td></tr>
+<tr><td>Tree, own flow + donors</td><td>+0.778</td><td>87%</td><td>−40%</td></tr>
+<tr class="hi"><td>LSTM, own flow (donors add nothing)</td><td>+0.813</td><td>96%</td><td>−34%</td></tr>
+<tr><td>Tree + the <em>actual</em> next-day rain (ceiling)</td><td>+0.859</td><td>87%</td><td>−28%</td></tr>
+<tr><td>Three days ahead, either family</td><td>+0.39</td><td>91–95%</td><td>−76%</td></tr>
+</table></div>
+
+<section class="col">
+<p>Three things carry over and one does not. The normalised LSTM keeps its
+edge over the tree; autoregression on the river's own flow is the main
+forecast ingredient; a calibrated one-day-ahead quantile ladder is
+achievable and covers the observed annual peak on 79% of peak days. What
+does not carry over is the neighbours: <strong>donor gauges add nothing at
+any lead of a day or more</strong>, in either model family — the nowcasting
+result was, exactly as its controls said, a same-day result.</p>
+<p>And the forecast ceiling names the next constraint. Every model without a
+rainfall forecast is 34–40% low on the peak day; handing the tree the
+observed next-day rain — a perfect forecast — restores simulation-level skill
+and cuts the peak-day shortfall to 28%. At three days nothing sees a flood at
+all, and tree and LSTM tie exactly. <strong>The binding constraint on flood
+forecasting here is the rainfall forecast, not the model.</strong> The next
+experiment is not a better architecture; it is numerical weather prediction
+as an input.</p>
+</section>
+
+<section class="col">
 <h2><span class="no">§8</span>The ledger</h2>
 </section>
 
