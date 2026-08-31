@@ -458,8 +458,15 @@ uncertainty feature, then the LSTM Taccari-style fine-tune.
 0.25° grid in BNG (median 4 cells, max 40) →
 `cache/nwp/gefs_catchment_leads_mean.parquet`. Rain r vs HadUK rises
 0.563→0.578 / 0.499→0.512 / 0.428→0.440, dry bias −19%→−15%.
-`hgb_forecast_gefs.py` now takes `[MODE] [fc_parquet] [suffix]`; the
-`_mean` ladder rerun's verdict is recorded below once scored.
+`hgb_forecast_gefs.py` now takes `[MODE] [fc_parquet] [suffix]`.
+Verdict of the `_mean` rerun: median NSE 0.803→0.806 / 0.543→0.551 /
+0.457→0.466 at leads 1/2/3 (paired dNSE +0.001/+0.003/+0.004, better
+in 59–65% of catchments); peak-day bias −29.0/−57.2/−63.9 (each ~1 pp
+better than nearest-cell). Small but uniformly positive — the
+catchment-mean parquet is now the standard forecast-rain input
+(committed at experiments/results/nwp/; skill CSVs
+forecast_gefs_mean_skill_L*.csv). The rain, not its spatial sampling,
+remains the binding constraint — the ensemble mean is the next lever.
 
 ### ARC BOX — Phase 7 LSTM with forecast rain (pass-off, 2026-08-31)
 
