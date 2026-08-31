@@ -453,6 +453,47 @@ TIGGE 50-member ensemble mean (pull running), catchment-mean rain via
 Catchment_Boundaries instead of gauge-point cell, member spread as an
 uncertainty feature, then the LSTM Taccari-style fine-tune.
 
+**Upgrade 2 — catchment-mean rain (CPU box, 2026-08-31):**
+`nwp/gefs_catchment_mean.py` intersects each boundary polygon with the
+0.25° grid in BNG (median 4 cells, max 40) →
+`cache/nwp/gefs_catchment_leads_mean.parquet`. Rain r vs HadUK rises
+0.563→0.578 / 0.499→0.512 / 0.428→0.440, dry bias −19%→−15%.
+`hgb_forecast_gefs.py` now takes `[MODE] [fc_parquet] [suffix]`; the
+`_mean` ladder rerun's verdict is recorded below once scored.
+
+### ARC BOX — Phase 7 LSTM with forecast rain (pass-off, 2026-08-31)
+
+`git pull`, then run these two on the Arc box (each writes its own
+--out; move/rename the parquets before the next run):
+
+```
+# 1. ceiling: observed future rain in the fc channels end-to-end
+python experiments/lstm/train_lstm.py --lead 1 --autoreg --fcrain perfect \
+  --out experiments/results/lstm_fc_perfect_L1
+# 2. real forecast: same training, GEFS catchment-mean rain substituted
+#    into the genuinely-future window steps at test time
+python experiments/lstm/train_lstm.py --lead 1 --autoreg \
+  --fcrain experiments/results/nwp/gefs_catchment_leads_mean.parquet \
+  --out experiments/results/lstm_fc_gefs_L1
+```
+
+How the patch works (train_lstm.py `--fcrain`, committed + smoke-tested
+on CPU): for lead L it appends L dynamic channels, channel k holding
+rain(τ+k) at step τ — observed wherever τ+k ≤ t (known by issue day),
+and only the last k steps of each window (genuinely future) are
+overwritten at test time with the forecast issued on day τ. Training
+years predate the GEFS archive so training always uses observed rain
+(the same train-on-obs / drive-with-forecast surrogate as the tree).
+Missing-forecast rows (2020-01→09 hole) keep observed rain and are
+marked `covered=False` in the output parquet — score honest subsets
+with it. NOTE a committed copy of the mean parquet lives at
+`experiments/results/nwp/gefs_catchment_leads_mean.parquet` (cache/ is
+gitignored) — point --fcrain there on the Arc box. Commit both prediction parquets; the CPU
+box scores them with analysis_forecast_skill.py (LEAD 1). Comparators:
+tree gefs_L1 0.803, tree ceiling 0.859, Phase 6 LSTM autoreg L1 0.813.
+If time allows: --lead 2 and --lead 3 pairs likewise (bump --epochs if
+val NSE is still climbing). Write results into this section, UTF-8.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at

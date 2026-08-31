@@ -31,8 +31,10 @@ from nowcast_common import D0, D1, nearest_donors
 from evaluate import evaluate, per_catchment, amax_bias, report
 
 OUT = Path(__file__).resolve().parent / "results"
-FC = Path(__file__).resolve().parents[1] / "cache/nwp/gefs_catchment_leads.parquet"
-MODE = sys.argv[1] if len(sys.argv) > 1 else "score"
+FC = Path(sys.argv[2]) if len(sys.argv) > 2 else \
+    Path(__file__).resolve().parents[1] / "cache/nwp/gefs_catchment_leads.parquet"
+SUF = sys.argv[3] if len(sys.argv) > 3 else ""   # e.g. "_mean" for the
+MODE = sys.argv[1] if len(sys.argv) > 1 else "score"  # catchment-mean rain
 
 BASE = dict(max_iter=400, learning_rate=0.08, max_leaf_nodes=63,
             min_samples_leaf=100, l2_regularization=1.0,
@@ -73,7 +75,7 @@ def build():
 
 
 def run(L):
-    if (OUT / f"forecast_ar_gefs_L{L}.parquet").exists():
+    if (OUT / f"forecast_ar_gefs{SUF}_L{L}.parquet").exists():
         print(f"L{L}: exists, skipping"); return
     DATA, GID, FCA = build()
     own = ["y_now"] + [f"y_lag{l}" for l in range(1, 7)] + ["y_mean30", "y_mean90"]
@@ -96,19 +98,23 @@ def run(L):
     idx = pd.DatetimeIndex(DATA.index[is_te], name="date") + pd.Timedelta(days=L)
     gte, yte = GID[is_te], tgt[is_te].values
     base = dict(gid=gte, obs=yte)
-    pd.DataFrame({**base, "pred": DATA.loc[is_te, "y_now"].values.astype("float32")},
-                 index=idx).to_parquet(OUT / f"forecast_persist2_L{L}.parquet")
+    if not (OUT / f"forecast_persist2_L{L}.parquet").exists():
+        pd.DataFrame({**base,
+                      "pred": DATA.loc[is_te, "y_now"].values.astype("float32")},
+                     index=idx).to_parquet(OUT / f"forecast_persist2_L{L}.parquet")
 
     Xte = DATA.loc[is_te, cols]
-    pd.DataFrame({**base, "pred": np.clip(m.predict(Xte), 0, None).astype("float32")},
-                 index=idx).to_parquet(OUT / f"forecast_ar_perfect2_L{L}.parquet")
+    if not (OUT / f"forecast_ar_perfect2_L{L}.parquet").exists():
+        pd.DataFrame({**base,
+                      "pred": np.clip(m.predict(Xte), 0, None).astype("float32")},
+                     index=idx).to_parquet(OUT / f"forecast_ar_perfect2_L{L}.parquet")
     Xte = Xte.copy()
     for k in range(1, L + 1):                        # drive with GEFS rain
         Xte[f"p_next{k}"] = FCA.loc[is_te, f"p_fc{k}"].values
     pd.DataFrame({**base, "pred": np.clip(m.predict(Xte), 0, None).astype("float32"),
                   "covered": FCA.loc[is_te, "p_fc1"].notna().values},
-                 index=idx).to_parquet(OUT / f"forecast_ar_gefs_L{L}.parquet")
-    print(f"L{L}: wrote perfect2 / gefs / persist2 parquets", flush=True)
+                 index=idx).to_parquet(OUT / f"forecast_ar_gefs{SUF}_L{L}.parquet")
+    print(f"L{L}: wrote gefs{SUF} parquets", flush=True)
 
 
 if MODE != "score":

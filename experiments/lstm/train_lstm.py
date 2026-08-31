@@ -106,14 +106,22 @@ def donor_features(gauges, k, train_end):
 
 
 class Windows(torch.utils.data.Dataset):
-    """(basin, t) pairs; __getitem__ slices the 365-day window ending at t."""
+    """(basin, t) pairs; __getitem__ slices the 365-day window ending at t.
 
-    def __init__(self, X, Y, S, index, seq=SEQ, lead=0):
+    Future-rain channels (--fcrain): channel k (of L, the last L dynamic
+    columns, first of them at column fc0) holds rain(tau+k) at timestep tau
+    -- observed rain wherever tau+k <= t (known by issue day), and for the
+    last k steps of the window (tau+k > t, genuinely future) the value from
+    FC: the forecast issued on day tau. FC is None for the perfect-rain
+    ceiling, where the observed value simply stays in place."""
+
+    def __init__(self, X, Y, S, index, seq=SEQ, lead=0, FC=None, fc0=0):
         self.X, self.Y, self.S, self.index = X, Y, S, index
         self.seq = seq  # carried on the instance: spawned DataLoader workers
                         # (Windows/macOS) re-import this module and would
                         # otherwise see the default SEQ, not --seq
         self.lead = lead
+        self.FC, self.fc0 = FC, fc0
 
     def __len__(self):
         return len(self.index)
@@ -122,7 +130,12 @@ class Windows(torch.utils.data.Dataset):
         b, t = self.index[i]
         x = self.X[b][t - self.seq + 1:t + 1]                 # (seq, n_forcing)
         s = np.broadcast_to(self.S[b], (self.seq, self.S[b].shape[0]))
-        return np.concatenate([x, s], axis=1), self.Y[b][t + self.lead], b
+        arr = np.concatenate([x, s], axis=1)
+        if self.FC is not None:
+            for k in range(1, self.lead + 1):
+                arr[self.seq - k:, self.fc0 + k - 1] = \
+                    self.FC[b][t - k + 1:t + 1, k - 1]
+        return arr, self.Y[b][t + self.lead], b
 
 
 class LSTMModel(nn.Module):
@@ -162,6 +175,18 @@ def main():
     ap.add_argument("--lead", type=int, default=0,
                     help="forecast lead in days: the window ends at day t and "
                          "the target is flow at t+lead. 0 = simulation (default)")
+    ap.add_argument("--basins", type=int, default=0,
+                    help="use only the first N gauges (0 = all); smoke tests")
+    ap.add_argument("--fcrain", default="",
+                    help="future-rain channels for --lead L runs. 'perfect' = "
+                         "observed rain on t+1..t+L (the ceiling, trained and "
+                         "evaluated on observed); a parquet path (e.g. cache/"
+                         "nwp/gefs_catchment_leads_mean.parquet, columns "
+                         "p_fc1..3 indexed (gid,date)) = train on observed, "
+                         "evaluate with the forecast substituted into the "
+                         "genuinely-future steps; rows whose issue day has no "
+                         "forecast keep observed rain and are marked "
+                         "covered=False in the output parquet")
     ap.add_argument("--autoreg", action="store_true",
                     help="add the target's own normalised observed flow as an "
                          "input channel at every step of the window (known up "
@@ -178,6 +203,8 @@ def main():
     print(f"device: {dev}", flush=True)
 
     gauges = good_catchments()
+    if args.basins:
+        gauges = gauges[:args.basins]
     print(f"loading {len(gauges)} basins...", flush=True)
     frames = load_basins(gauges)
 
@@ -196,7 +223,14 @@ def main():
         print(f"donor features: {args.donors} nearest gauges "
               f"(2x{args.donors} columns per basin)", flush=True)
 
-    X, Y, S, y_stats = {}, {}, {}, {}
+    fc_tab = None
+    if args.fcrain:
+        assert args.lead > 0, "--fcrain needs --lead >= 1"
+        if args.fcrain != "perfect":
+            fc_tab = pd.read_parquet(args.fcrain)
+            print(f"forecast rain: {args.fcrain}", flush=True)
+
+    X, Y, S, y_stats, FC, COV = {}, {}, {}, {}, {}, {}
     tr_index, va_index, te_index, dates = [], [], [], {}
     val_start = train_end - pd.DateOffset(years=3)
     for b, d in frames.items():
@@ -213,6 +247,18 @@ def main():
         if args.autoreg:
             X[b] = np.concatenate(
                 [X[b], np.nan_to_num(Y[b], nan=0.0)[:, None].astype("float32")], axis=1)
+        if args.fcrain:  # future-rain channels, LAST dynamic columns (fc0)
+            obs_n = np.stack(
+                [(d["precipitation_haduk"].shift(-k).to_numpy("float32")
+                  - f_mean[0]) / f_std[0] for k in range(1, args.lead + 1)], 1)
+            obs_n = np.nan_to_num(obs_n, nan=0.0)
+            X[b] = np.concatenate([X[b], obs_n], axis=1)
+            if fc_tab is not None:
+                g = fc_tab.loc[b].reindex(d.index)
+                fcv = (g[[f"p_fc{k}" for k in range(1, args.lead + 1)]]
+                       .to_numpy("float32") - f_mean[0]) / f_std[0]
+                COV[b] = ~np.isnan(fcv[:, 0])
+                FC[b] = np.where(np.isnan(fcv), obs_n, fcv).astype("float32")
         S[b] = s_z.loc[b].to_numpy("float32")
         dates[b] = d.index
         ok = ~np.isnan(y)
@@ -288,8 +334,11 @@ def main():
 
     # --- full test inference, harness format ---------------------------------
     print("test inference...", flush=True)
-    dl = torch.utils.data.DataLoader(Windows(X, Y, S, te_index, SEQ, lead=args.lead), batch_size=1024,
-                                     num_workers=args.workers)
+    dl = torch.utils.data.DataLoader(
+        Windows(X, Y, S, te_index, SEQ, lead=args.lead,
+                FC=FC if fc_tab is not None else None,
+                fc0=n_dyn - args.lead),
+        batch_size=1024, num_workers=args.workers)
     model.eval(); preds = []
     with torch.no_grad():
         for xb, _, _ in dl:
@@ -311,6 +360,8 @@ def main():
     else:
         res = pd.DataFrame({"gid": gid, "obs": obs,
                             "pred": np.clip(p_norm * sd + mu, 0, None)}, index=idx)
+    if fc_tab is not None:
+        res["covered"] = [COV[b][t] for b, t in te_index]
     res.to_parquet(out / "lstm_test_predictions.parquet")
     (out / "lstm_manifest.json").write_text(json.dumps(
         {**vars(args), "device": str(dev), "n_basins": len(gauges),
