@@ -400,7 +400,7 @@ Priority order: the 2020-01→09 hole first, then the whole 2010–2022
 window. Log: `cache/nwp/tigge/pull.log`; manage with
 `systemctl --user {status,stop,start} tigge-pull`.
 
-**Track B status (2026-08-30 evening):** Track B pull RUNNING on the CPU box —
+**Track B status: COMPLETE 2026-08-31 03:23** (136/136 cubes, 0 errors). Was —
 control member, leads 1–3, 2010-10-01 → 2019-12-31 then 2020-09-23 →
 2022-09-30, ~4 MB/day at this box's 0.55 MB/s line ≈ 9–10 h, into
 `cache/nwp/gefs_c00_YYYYMM.nc` (zlib, ~1 MB/month). Monthly cubes are
@@ -414,15 +414,44 @@ cubes (they are small — put them under `experiments/results/nwp/` via
 (needs `pip install eccodes cfgrib xarray netCDF4 requests`). Members
 p02–p04 likewise if time allows; ensemble spread is the payoff.
 
-**Next build once cubes exist (Phase 7 model):** map each catchment to
-its nearest 0.25° cell (gauge_lat/gauge_lon in the topographic table;
-catchment-mean via `data/Catchment_Boundaries` later), add
-`p_fc_lead1..3` columns, and re-run the Phase 6 forecast ladder with
-forecast rain in place of the "perfect rain" column — the forecast-skill
-number lands between ar_donor_L1 (+0.778 / −40%) and ar_perfect_L1
-(+0.859 / −28%). Then the LSTM (Taccari-style fine-tune on the forecast
-years). Test window for the GEFS track: 2010-10 → 2019-09 (9 water
-years) + 2020-10 → 2022-09.
+**Phase 7 model — DONE 2026-08-31 (tree ladder, GEFS c00).** GEFS pull
+finished clean (136/136 monthly cubes, 0 errors, 7 h). Build:
+`nwp/gefs_join.py` (nearest 0.25° cell to gauge_lat/lon →
+`cache/nwp/gefs_catchment_leads.parquet`, p_fc1..3 per gid×issue-day) +
+`hgb_forecast_gefs.py` (per-lead subprocesses; trains ar_perfect on
+*observed* rain path p_next1..L — train years predate the archive — then
+predicts test twice: observed rain = ceiling, GEFS rain substituted =
+real skill; 2020-01→09 hole left NaN, trees route it; `covered` column
+marks GEFS rows).
+
+GEFS c00 rain quality at the gauge cell (30-catchment sample): r = 0.56
+/ 0.50 / 0.43 vs HadUK at leads 1/2/3, dry bias −19% (2.6 vs 3.2
+mm/day).
+
+Verdict (median NSE; floor = Phase 6 ar_donor, ceiling = perfect rain
+path — ceiling now fit at every lead, a new fact):
+
+| lead | persistence | floor | **GEFS** | ceiling | gap recovered |
+|---|---|---|---|---|---|
+| 1 | 0.538 | 0.778 | **0.803** | 0.859 | 31% |
+| 2 | 0.227 | 0.485 | **0.543** | 0.834 | 17% |
+| 3 | 0.078 | 0.390 | **0.457** | 0.821 | 16% |
+
+Two headline facts. (1) The perfect-rain ceiling barely decays with lead
+(0.859→0.821): 1–3-day flow forecastability is almost entirely rain
+knowledge. (2) Real 2010s-era control-member NWP already moves every
+lead off the floor and beats persistence in 85–88% of catchments —
+"lead ≥ 2 is near-blind" is softened, not overturned: peak-day bias
+L1 −29.9% (nearly the ceiling's −27.9%) but −58% / −65% at L2/L3
+(ceiling holds ~−30%); own-max ±1d timing 46% / 27% / 19% vs ceiling's
+~52%. Timing-blind AMAX quirk: GEFS shows −8.3% at L1, *better* than
+the ceiling's −15% — noisy rain inflates the year-max; trust the
+peak-day numbers (`forecast_gefs_skill_L{1,2,3}.csv`).
+
+Upgrades that should close more of the gap, in expected-value order:
+TIGGE 50-member ensemble mean (pull running), catchment-mean rain via
+Catchment_Boundaries instead of gauge-point cell, member spread as an
+uncertainty feature, then the LSTM Taccari-style fine-tune.
 
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
