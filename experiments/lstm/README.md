@@ -646,3 +646,26 @@ tree does, presumably because the LSTM can weigh the forecast against
 catchment state instead of taking it at face value. (3) The remaining
 0.043 to the LSTM ceiling is the rain-forecast error itself — the
 ensemble-mean/TIGGE upgrade path the CPU box is pulling.
+
+**Lead 2** (`results/lstm_fc_perfect_L2/`, `lstm_fc_gefs_L2/`; the GEFS
+run reuses the ceiling checkpoint as at lead 1). Ceiling val NSE(norm)
++0.800 → +0.851 final.
+
+| lead 2, 416 catchments | persistence | tree + GEFS rain | **LSTM + GEFS rain** | LSTM ceiling | tree ceiling |
+|---|---|---|---|---|---|
+| median NSE | +0.227 | +0.551 | **+0.644** | +0.880 | +0.834 |
+| top-1% NSE | −5.18 | — | −2.81 | −0.29 | — |
+| bias on the observed AMAX day | −73%* | −57.2% | **−52.5%** | −24.1% | ~−30% |
+| own AMAX within ±1 day of obs | 100% (constr.) | — | 33.9% | 59.6% | — |
+| paired vs persistence | — | — | +0.408, 96.9% | +0.651, 98.8% | — |
+
+\* CPU-box Phase 6 number for lead-2 persistence-style baselines.
+Covered-only: +0.622 / top-1% −2.94 / peak-day −54.7%.
+
+Reading: the LSTM's margin over the tree with identical rain *grows*
+with lead (+0.052 at L1 → +0.093 at L2), and its ceiling stays almost
+flat (+0.901 → +0.880) where skill without rain forecasts collapsed
+(+0.813 → ~+0.49). But the GEFS forecast's own two-day error now costs
+real flood skill: peak-day bias −52% against the ceiling's −24%, and
+timing halves. At lead 2 the model is no longer the problem at all —
+the entire ceiling-to-real gap (0.24 NSE) is rain-forecast error.
