@@ -594,3 +594,55 @@ network — own flow + forcings + the quantile head — and the donor
 infrastructure belongs to the simulation / gap-filling use case, not the
 forecast one. The rain forecast (the CPU box's +0.859 ceiling with actual
 next-day rain) is the only lever left at lead 1.
+
+## Phase 7, Arc box — forecast rain in the LSTM (2026-09-01)
+
+`train_lstm.py --fcrain` (CPU-box patch): for lead L, L extra dynamic
+channels carry future rain — observed wherever it is known by the issue
+day, and at test time the genuinely-future steps are overwritten with the
+GEFS catchment-mean forecast issued that day (`--fcrain <parquet>`), or
+left observed for the ceiling (`--fcrain perfect`). Training always uses
+observed rain (the archive postdates the training years), so the ceiling
+and GEFS runs of a lead are the *same trained model* driven with
+different rain at inference. We exploit that literally: each GEFS run
+reuses its ceiling twin's checkpoint and goes straight to inference
+(training is bit-identical by construction — both runs logged val +0.812
+at epoch 0 before we deduplicated — and sharing weights makes the
+ceiling-vs-GEFS comparison exactly paired). All runs 16 epochs, seed 0,
+no donors (F4 showed they price at zero). Rows with no forecast
+(2020-01→09 GEFS hole) keep observed rain and are flagged
+`covered=False`; 93.9% of test rows are covered.
+
+**Lead 1** (`results/lstm_fc_perfect_L1/`, `lstm_fc_gefs_L1/`; cards
+`results/lstm_p7_cards.csv`, paired `lstm_p7_vs_persistence.csv`).
+Ceiling val NSE(norm): +0.812 first epoch → +0.882 final — the rain
+channels lift the whole curve above every no-rain run from epoch 0.
+
+| lead 1, 416 catchments | persistence | LSTM, no rain fc (F4) | tree + GEFS rain | **LSTM + GEFS rain** | LSTM ceiling | tree ceiling |
+|---|---|---|---|---|---|---|
+| median NSE | +0.538 | +0.813 | +0.806 | **+0.858** | +0.901 | +0.859 |
+| top-1% NSE | −3.25 | −1.34 | — | **−0.71** | −0.17 | — |
+| AMAX bias | 0.0% (constr.) | −16.4% | — | −9.9%* | −16.3% | −15.0%* |
+| bias on the observed AMAX day | −54% | −34.1% | −29.0% | **−25.2%** | −24.6% | −27.9% |
+| own AMAX within ±1 day of obs | 100% (constr.) | 53.1% | ~50% | 51.0% | 63.7% | 57% |
+| paired vs persistence | — | +0.253, 96.2% | — | +0.310, 96.6% | +0.354, 97.1% | — |
+| pred max, mm/day (obs 244) | 244 | 86 | — | 167 | 167 | — |
+
+\* the timing-blind AMAX quirk from the tree replicates: noisy forecast
+rain inflates the year-max, so GEFS "beats" its own ceiling on that
+metric; trust the peak-day row. Covered-only subset: +0.855 median,
+top-1% −0.75, peak-day −25.9% — the hole is not carrying the result.
+
+Reading: three facts. (1) **The LSTM's perfect-rain ceiling is +0.901**,
+far above the tree's +0.859 — with the same information the LSTM extracts
+more, and its flood-day skill at the ceiling (top-1% NSE −0.17, peak-day
+−24.6%, timing 64%) is the best any model here has shown at any lead.
+(2) **Real 2010s control-member NWP already delivers +0.858** — equal to
+the tree's *perfect-rain* ceiling, +0.052 over the tree with the same
+GEFS input, +0.045 over the best no-rain-forecast LSTM. The LSTM
+recovers 51% of its floor→ceiling gap where the tree recovered ~35%; a
+learned model converts an imperfect rain signal into flow better than a
+tree does, presumably because the LSTM can weigh the forecast against
+catchment state instead of taking it at face value. (3) The remaining
+0.043 to the LSTM ceiling is the rain-forecast error itself — the
+ensemble-mean/TIGGE upgrade path the CPU box is pulling.
