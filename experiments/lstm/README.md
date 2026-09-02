@@ -669,3 +669,37 @@ flat (+0.901 → +0.880) where skill without rain forecasts collapsed
 real flood skill: peak-day bias −52% against the ceiling's −24%, and
 timing halves. At lead 2 the model is no longer the problem at all —
 the entire ceiling-to-real gap (0.24 NSE) is rain-forecast error.
+
+**Lead 3** (`results/lstm_fc_perfect_L3/`, `lstm_fc_gefs_L3/`; checkpoint
+shared as above). Ceiling val NSE(norm) +0.787 → +0.841 final.
+
+| lead 3, 416 catchments | persistence | LSTM, no rain fc (F3*) | tree + GEFS rain | **LSTM + GEFS rain** | LSTM ceiling | tree ceiling |
+|---|---|---|---|---|---|---|
+| median NSE | +0.077 | +0.388 | +0.466 | **+0.544** | +0.874 | +0.821 |
+| top-1% NSE | −6.06 | −6.40 | — | −3.66 | −0.19 | — |
+| bias on the observed AMAX day | −77% | −76.1% | −63.9% | **−58.9%** | −21.6% | ~−30% |
+| own AMAX within ±1 day of obs | 100% (constr.) | 4.9% | — | 23.3% (lag +1 d) | 59.1% | — |
+| paired vs persistence | — | +0.314, 94.7% | — | +0.462, 96.6% | +0.798, 98.6% | — |
+
+\* Phase 6 F3 had donors; F4 showed they price at zero.
+Covered-only: +0.515 / top-1% −4.01 / peak-day −61.0%.
+
+**Phase 7 verdict.** Three stacked facts, one per column of the ladder:
+
+1. **The LSTM ceiling is nearly lead-invariant: +0.901 / +0.880 / +0.874.**
+   With future rain known, three days ahead is almost as forecastable as
+   one — so the entire lead decay every no-rain-forecast model showed
+   (persistence 0.538→0.077, LSTM 0.813→0.388) was rain ignorance, not
+   hydrology. Flood-day skill at the ceiling barely decays either
+   (peak-day −24.6/−24.1/−21.6%, top-1% NSE −0.17/−0.29/−0.19).
+2. **Real 2010s control-member NWP delivers +0.858 / +0.644 / +0.544** —
+   at lead 1 that equals the tree's perfect-rain ceiling, and at every
+   lead it beats the tree fed the identical forecast by +0.05–0.09. The
+   learned model extracts more from an imperfect rain signal, and the
+   margin grows exactly where the signal gets noisier.
+3. **What remains is rain-forecast error, quantified per lead:** 0.043 /
+   0.236 / 0.330 NSE from real to ceiling. On flood days GEFS keeps
+   peak-day bias near the ceiling at lead 1 (−25%) but loses it at 2–3
+   days (−52/−59% vs −24/−22%). That is the target for the ensemble
+   mean, member spread, and the TIGGE 50-member pull — with a measured,
+   large prize.

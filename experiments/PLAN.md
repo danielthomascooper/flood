@@ -501,6 +501,37 @@ tree gefs_L1 0.803, tree ceiling 0.859, Phase 6 LSTM autoreg L1 0.813.
 If time allows: --lead 2 and --lead 3 pairs likewise (bump --epochs if
 val NSE is still climbing). Write results into this section, UTF-8.
 
+**ARC BOX STATUS — Phase 7 LSTM DONE (2026-09-02, all six runs committed
+and pushed: 7fc860b L1, 8fadbc0 L2, + the L3 commit).** Parquets +
+manifests + logs in `results/lstm_fc_{perfect,gefs}_L{1,2,3}`; cards
+`results/lstm_p7_cards.csv`, paired + peak timing
+`results/lstm_p7_vs_persistence.csv` (covered-only rows included).
+Findings in `lstm/README.md` ("Phase 7, Arc box"). Notes: 16 epochs per
+run (matched to the Phase 6 budget, not the snippet's default 8, so the
+rain effect is not confounded with training length); each GEFS run
+reuses its ceiling twin's checkpoint and runs inference only — training
+is identical by construction (obs rain only; epoch-0 vals matched
+exactly), which makes the ceiling-vs-GEFS comparison exactly paired.
+
+| lead | persistence | LSTM no rain fc | tree+GEFS | **LSTM+GEFS** | LSTM ceiling | tree ceiling |
+|---|---|---|---|---|---|---|
+| 1 | 0.538 | 0.813 | 0.806 | **0.858** | 0.901 | 0.859 |
+| 2 | 0.227 | (0.485 tree) | 0.551 | **0.644** | 0.880 | 0.834 |
+| 3 | 0.077 | 0.388 | 0.466 | **0.544** | 0.874 | 0.821 |
+
+Verdicts: (1) the LSTM perfect-rain ceiling is nearly lead-invariant
+(0.901/0.880/0.874) — all lead decay in no-rain-forecast models was rain
+ignorance; its flood-day skill barely decays (peak-day −25/−24/−22%,
+top-1% NSE −0.2/−0.3/−0.2). (2) LSTM + GEFS equals the tree's
+perfect-rain ceiling at lead 1 and beats the tree on identical rain by
++0.05–0.09 at every lead; peak-day −25% at L1 (better than the tree
+ceiling's −28%) but −52/−59% at L2/3. (3) The remaining gap (0.04/0.24/
+0.33 NSE) is rain-forecast error — the measured prize for the TIGGE
+ensemble mean + spread and the Taccari-style fine-tune. Suggested next
+Arc runs once TIGGE lands: same pairs with ensemble-mean rain + a spread
+channel, and a lead-1 quantile head on GEFS rain for the operational
+ladder.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
