@@ -1,0 +1,34 @@
+building forecast frames...
+  7,901,088 rows in 24s
+L1: fitted in 285s
+L1: wrote perfect2 / gefs / persist2 parquets
+building forecast frames...
+  7,901,088 rows in 24s
+L2: fitted in 250s
+L2: wrote perfect2 / gefs / persist2 parquets
+building forecast frames...
+  7,901,088 rows in 24s
+L3: fitted in 265s
+L3: wrote perfect2 / gefs / persist2 parquets
+
+                n_catchments  median_NSE  median_KGE  pct_NSE_neg  top1_NSE  top1_bias_pct  AMAX_bias_pct  q99_dist_bias_pct  pred_max  obs_max  coverage
+model                                                                                                                                                    
+persist2_L1              416      +0.538      +0.769       +2.644    -3.252        -37.681         +0.000             +0.000  +244.380 +244.380    +0.711
+ar_perfect2_L1           416      +0.859      +0.869       +0.000    -0.594        -21.639        -15.036             -8.726  +101.379 +244.380    +0.537
+ar_gefs_L1               416      +0.803      +0.831       +0.000    -1.540        -24.785         -8.303            -10.222   +80.674 +244.380    +0.522
+persist2_L2              416      +0.227      +0.614      +27.404    -5.174        -56.378         +0.000             +0.000  +244.380 +244.380    +0.673
+ar_perfect2_L2           416      +0.834      +0.850       +0.481    -0.931        -24.237        -16.247            -10.487   +96.095 +244.380    +0.528
+ar_gefs_L2               416      +0.543      +0.651       +0.240    -4.251        -49.521        -22.125            -22.126   +63.916 +244.380    +0.489
+persist2_L3              416      +0.078      +0.539      +43.029    -6.054        -62.110         +0.000             +0.000  +244.380 +244.380    +0.649
+ar_perfect2_L3           416      +0.821      +0.838       +0.721    -0.998        -25.885        -16.683            -11.577   +99.404 +244.380    +0.532
+ar_gefs_L3               416      +0.457      +0.567       +1.923    -5.157        -57.610        -25.443            -26.265   +63.088 +244.380    +0.476
+
+=== skill vs persistence (paired per catchment, median) ===
+  ar_perfect2  L1: dNSE vs persistence +0.330 (GEFS-covered rows only +0.331), beats it in 87%; AMAX bias -15.0% (persistence +0.0%)
+  ar_gefs      L1: dNSE vs persistence +0.272 (GEFS-covered rows only +0.279), beats it in 85%; AMAX bias -8.3% (persistence +0.0%)
+  ar_perfect2  L2: dNSE vs persistence +0.619 (GEFS-covered rows only +0.612), beats it in 90%; AMAX bias -16.2% (persistence +0.0%)
+  ar_gefs      L2: dNSE vs persistence +0.335 (GEFS-covered rows only +0.354), beats it in 87%; AMAX bias -22.1% (persistence +0.0%)
+  ar_perfect2  L3: dNSE vs persistence +0.766 (GEFS-covered rows only +0.757), beats it in 91%; AMAX bias -16.7% (persistence +0.0%)
+  ar_gefs      L3: dNSE vs persistence +0.389 (GEFS-covered rows only +0.411), beats it in 88%; AMAX bias -25.4% (persistence +0.0%)
+
+wrote forecast_gefs_cards.csv, forecast_gefs_per_catchment.csv

@@ -1,0 +1,12 @@
+building forecast frames...
+  7,901,088 rows in 24s
+L1: fitted in 276s
+L1: wrote gefs_mean parquets
+building forecast frames...
+  7,901,088 rows in 24s
+L2: fitted in 284s
+L2: wrote gefs_mean parquets
+building forecast frames...
+  7,901,088 rows in 25s
+L3: fitted in 289s
+L3: wrote gefs_mean parquets
