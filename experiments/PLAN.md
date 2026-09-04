@@ -492,6 +492,32 @@ an extra input, (c) quantile head on ensemble rain — the member-max or
 q90 of member rain may serve the tails better than the mean. Skill CSVs:
 forecast_skill_L{1,2,3}.csv (ens + mean scored side by side).
 
+**Upgrade 3 stage 2 — member space vs mean space (CPU box, 2026-09-04,
+`hgb_forecast_members.py`):** the same trained tree driven separately
+with each member's rain (5 flow forecasts/row, per-member parquet
+`gefs_catchment_leads_members.parquet`, preds in
+forecast_members_L{1,2,3}.parquet) plus a member-max rain path. Verdict:
+(1) **mean-of-flows ≈ flow-of-mean-rain** — median NSE 0.817/0.586/0.516
+vs 0.816/0.585/0.516, peak-day bias within 1 pp at every lead; the
+tree's rain→flow map is effectively linear at daily scale, so the cheap
+ensemble-mean input loses nothing. (2) **member-max rain is a flood
+scenario, not a better forecast**: peak-day bias improves a lot
+(−19.0/−38.9/−42.7 vs the mean's −29.9/−58.7/−65.9 — at L3 it beats the
+mean by 23 pp) but median skill pays (NSE 0.747/0.363/0.183,
+beats-persistence 74/59/51%). Sharpness-for-calibration trade, as
+expected. Operational shape: ensemble mean = best estimate, member-max
+flow = upper scenario — or, without any retraining, a scenario-matched
+ladder that drives the upper quantiles with member-max rain and the
+median with mean rain. Combo parquets forecast_{flowmean,flowmax,
+rainmax}_L{1,2,3}.parquet; scores in forecast_skill_L{1,2,3}.csv.
+
+**Arc pass-off (ens rerun, inference-only):** for each lead, copy the
+ceiling run dir (checkpoint at epoch 16) to a new --out, then rerun
+train_lstm.py with the SAME flags but
+`--fcrain experiments/results/nwp/gefs_catchment_leads_ens.parquet`
+--out <newdir> — it resumes at epoch 16 and only runs test inference
+with the ensemble-mean rain. Comparators: LSTM+c00 0.858/0.644/0.544.
+
 ### ARC BOX — Phase 7 LSTM with forecast rain (pass-off, 2026-08-31)
 
 `git pull`, then run these two on the Arc box (each writes its own

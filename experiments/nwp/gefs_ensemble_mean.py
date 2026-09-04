@@ -80,6 +80,13 @@ for m in MEMBERS:
 stack = pd.concat(per_member, axis=1, join="inner", keys=MEMBERS)
 print(f"aligned rows: {len(stack):,} (member-wise inner join)")
 
+memb = stack.copy()
+memb.columns = [f"p_fc{c[1][1]}_{c[0]}" for c in stack.columns]  # p_fc1_c00 ...
+memb = memb.astype("float32").sort_index()
+memb.to_parquet(ROOT / "cache/nwp/gefs_catchment_leads_members.parquet")
+print(f"per-member parquet: {memb.shape[1]} cols -> "
+      "cache/nwp/gefs_catchment_leads_members.parquet")
+
 out = {}
 for L in lead_days:
     cols = stack.xs(f"L{L}", axis=1, level=1)          # (rows, members)
