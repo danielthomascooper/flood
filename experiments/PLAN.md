@@ -582,6 +582,28 @@ Arc runs once TIGGE lands: same pairs with ensemble-mean rain + a spread
 channel, and a lead-1 quantile head on GEFS rain for the operational
 ladder.
 
+**ARC BOX STATUS — ens rerun + quantile ladder DONE (2026-09-04, commits
+4195731 and the P7c commit).** (a) Ens-mean reruns L1-3 (inference-only on
+the Phase 7 ceiling checkpoints): LSTM 0.862/0.659/0.594, +0.004/+0.015/
++0.050 over c00 (same pays-most-at-L3 shape as the tree), +0.046/+0.074/
++0.078 over the tree on identical ens rain; peak-day smoothing tax
+replicates in miniature (1-3 pp). Adopt ens mean as the point input.
+(c) Lead-1 quantile ladder trained on obs rain (`lstm_fc_perfect_q_L1`,
+q50 +0.895) then driven with ens rain (`lstm_fc_ens_q_L1`, q50 +0.859 -
+quantile head still free on point skill). **Key finding: the rain-channel
+ladder is overconfident under real forecasts** - it keeps ceiling
+sharpness (90% width 0.275 vs 0.278 mm/day) so q99 covers only 73.0% of
+annual peaks (perfect rain: 87.7%; the no-rain F2 ladder: 79.0%) and
+q95/q99 under-cover pooled (0.929/0.972). Point skill and the flood
+bound have diverged: ens rain wins the median (+0.859 vs +0.806) but F2
+remains the safer envelope. This is the quantified case for (b) the
+s_fc spread channel / member-q90 rain and the forecast-archive
+fine-tune - the ladder needs the rain forecast's uncertainty as an
+input. Also: lower ladder halves collapse with rain channels (q50
+pooled 0.28) - use the upper half only. Cards:
+lstm_fc_{perfect,ens}_q_L1_{cards,calibration}.csv; point rows in
+lstm_p7_cards.csv / lstm_p7_vs_persistence.csv.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at

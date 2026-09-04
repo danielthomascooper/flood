@@ -730,3 +730,36 @@ The LSTM beats the tree on identical ensemble rain by +0.046/+0.074/
 0.280 NSE. Verdict: the ensemble mean is the right point input at every
 lead (adopt it), the flood signal now sits in the member spread and
 upper members — which the mean, by construction, throws away.
+
+**Phase 7c — the quantile ladder on forecast rain (lead 1, 2026-09-04).**
+`--lead 1 --autoreg --fcrain perfect --head quantile --epochs 16` trained
+once (`results/lstm_fc_perfect_q_L1/`, val q50 +0.810 → +0.878, best
++0.881); the ensemble-rain twin (`lstm_fc_ens_q_L1/`) reuses the
+checkpoint, inference only. Cards `results/lstm_fc_{perfect,ens}_q_L1_
+{cards,calibration}.csv`; point rows in the p7 CSVs.
+
+| lead 1 | q50 median NSE | q99 ≥ obs on AMAX days | q95 pooled | q99 pooled | 90% width mm/day |
+|---|---|---|---|---|---|
+| F2 ladder, no rain fc | +0.806 | 79.0% | 0.963 | 0.992 | 0.447 |
+| **ladder + ens rain** | **+0.859** | **73.0%** | 0.929 | 0.972 | 0.275 |
+| ladder + perfect rain | +0.895 | 87.7% | 0.960 | 0.993 | 0.278 |
+
+Readings. (1) The quantile head stays free on point skill with rain
+channels: q50 +0.895/+0.859 vs the mse pair's +0.901/+0.862. With
+perfect rain the flood bound is the best of the whole project — q99
+clears 87.7% of annual peaks at a median 1.31× ratio, with a 90% band
+40% sharper than the no-rain ladder. (2) **Driven by real forecast rain
+the same ladder is overconfident**: it keeps its ceiling sharpness
+(0.275 vs 0.278 mm/day — the model cannot know its rain input is noisy)
+so q95/q99 under-cover (0.929/0.972 pooled) and the annual-peak bound
+drops to 73.0% — *below* the no-rain F2 ladder's 79.0%. Rain channels
+buy point skill unconditionally, but the honest flood bound needs the
+forecast's uncertainty as an input. That is the measured case for the
+spread channel (s_fc, stage 2) and the Taccari-style fine-tune on the
+forecast archive; until then, F2's wider no-rain ladder remains the
+safer operational envelope even though its median is 5 points worse.
+(3) A quirk worth noting: with rain channels the *lower* half of both
+ladders under-covers (q50 pooled 0.28 vs F2's 0.52) — conditioning on
+future rain collapses the low quantiles toward the point while the
+upper tail stays calibrated; only the upper half of the ladder should
+be used operationally.
