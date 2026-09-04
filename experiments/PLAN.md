@@ -604,6 +604,37 @@ pooled 0.28) - use the upper half only. Cards:
 lstm_fc_{perfect,ens}_q_L1_{cards,calibration}.csv; point rows in
 lstm_p7_cards.csv / lstm_p7_vs_persistence.csv.
 
+**Phase 7c follow-up — scenario-matched ladder WORKS (CPU box,
+2026-09-05, `hgb_forecast_quantiles.py`).** Tree lead-1 ladder
+(q50/q90/q95/q99, trained on observed next-day rain, same tree config)
+driven three ways at test with no retraining. AMAX-day q99 coverage
+(4,542 events, GEFS-covered rows): **perfect rain 82.1% → ens-mean 69.6%
+→ member-max 79.8%.** The tree replicates Arc's LSTM collapse almost
+exactly (87.7→73.0 there) — pooled q99 0.989→0.967, q95 0.952→0.922:
+the rain-trained ladder is overconfident under any real rain forecast.
+Member-max rain in the same channel recovers ~80% of the lost peak
+coverage and re-calibrates the pooled upper tail (q95 0.948, q99 0.981)
+at a width cost of +34% (q99−q50 0.228→0.307 mm/day) and a more
+generous envelope on peak days (median q99/obs 1.25→1.51). It is NOT a
+median: memmax q50 pooled 0.597 (biased high, as it should be). So the
+operational ladder is composite — **median from ens-mean rain (q50 NSE
++0.800 as point), upper quantiles from member-max rain** — and at lead 1
+with 5 members it matches the no-rain F2 ladder's 79% peak coverage
+while keeping the forecast-rain point skill. Full table:
+forecast_quantile_scenario_L1.csv; parquets forecast_q{50,90,95,99}_L1
+(pred_perfect / pred_ens / pred_memmax). Open: with 50 TIGGE members the
+member-max is a far wetter scenario — member-q90 will likely be the
+right upper driver there; with 5 members max ≈ q80–q90 already.
+
+**ARC PASS-OFF (7d, inference-only, ~15 min):** drive the 7c quantile
+checkpoint (`lstm_fc_perfect_q_L1`) with
+`--fcrain experiments/results/nwp/gefs_catchment_leads_memmax.parquet`
+(p_fc1..3 = max over c00+p01–p04, same shape as the ens parquet) into a
+new --out, then report q95/q99 pooled + AMAX-day coverage and the 90%
+width vs the ens-rain run (73.0% / 0.275). Expectation from the tree:
+AMAX q99 back to ~80%+, width up ~30%. If it lands, the composite ladder
+(q50 from ens run, q90+ from memmax run) is the operational config.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at

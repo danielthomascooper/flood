@@ -1,0 +1,17 @@
+building forecast frames...
+  7,901,088 rows in 22s
+q50: fitted in 544s
+q50: wrote forecast_q50_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+q90: fitted in 598s
+q90: wrote forecast_q90_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+q95: fitted in 542s
+q95: wrote forecast_q95_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+q99: fitted in 519s
+q99: wrote forecast_q99_L1.parquet
+LADDER DONE Sat Sep  5 12:16:59 AM BST 2026
