@@ -1,0 +1,8 @@
+device: xpu
+loading 416 basins...
+forecast rain: experiments\results\nwp\gefs_catchment_leads_ens.parquet
+windows: 5,428,023 train / 454,550 val / 1,819,212 test
+resumed from epoch 16
+test inference...
+wrote experiments\results\lstm_fc_ens_L3\lstm_test_predictions.parquet (1,819,212 rows)
+score it back on the main machine with experiments/evaluate.py

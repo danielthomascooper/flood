@@ -703,3 +703,30 @@ Covered-only: +0.515 / top-1% −4.01 / peak-day −61.0%.
    days (−52/−59% vs −24/−22%). That is the target for the ensemble
    mean, member spread, and the TIGGE 50-member pull — with a measured,
    large prize.
+
+**Phase 7b — 5-member ensemble-mean rain (2026-09-04).** The CPU box's
+`gefs_catchment_leads_ens.parquet` (c00+p01–p04, boundary-weighted
+catchment mean) dropped straight into `--fcrain`; each run reuses its
+Phase 7 ceiling checkpoint (inference only, ~15 min/lead), so all three
+are exactly paired with the ceiling and the single-member runs
+(`results/lstm_fc_ens_L{1,2,3}/`; scored in the same p7 CSVs).
+
+| median NSE | lead 1 | lead 2 | lead 3 |
+|---|---|---|---|
+| tree + ens mean | +0.816 | +0.585 | +0.516 |
+| LSTM + single member | +0.858 | +0.644 | +0.544 |
+| **LSTM + ens mean** | **+0.862** | **+0.659** | **+0.594** |
+| LSTM ceiling | +0.901 | +0.880 | +0.874 |
+
+Deltas vs the single member: +0.004 / +0.015 / +0.050 — the ensemble
+pays where member noise is largest, ~12× more at lead 3 than lead 1,
+the same shape the tree showed. Own-peak timing improves at every lead
+(51.5/36.2/25.5% vs 51.0/33.9/23.3%) but the smoothing tax on extremes
+replicates in miniature: peak-day bias −26.2/−55.2/−61.2% against the
+single member's −25.2/−52.5/−58.9%, and top-1% NSE a shade worse at
+leads 1–2. Covered-only within 0.02 of the full numbers everywhere.
+The LSTM beats the tree on identical ensemble rain by +0.046/+0.074/
++0.078; the remaining gap to the lead-invariant ceiling is 0.039/0.221/
+0.280 NSE. Verdict: the ensemble mean is the right point input at every
+lead (adopt it), the flood signal now sits in the member spread and
+upper members — which the mean, by construction, throws away.
