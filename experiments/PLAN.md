@@ -468,6 +468,30 @@ catchment-mean parquet is now the standard forecast-rain input
 forecast_gefs_mean_skill_L*.csv). The rain, not its spatial sampling,
 remains the binding constraint — the ensemble mean is the next lever.
 
+**Upgrade 3 — 5-member ensemble mean (CPU box, 2026-09-04):** members
+p01–p04 pulled from S3 (136/136 monthly cubes each, 0 errors, ~2 days on
+this line; resume-safe loop in cache/nwp/pull_members.log).
+`nwp/gefs_ensemble_mean.py` puts each member through the upgrade-2
+boundary-weighted catchment mean, then averages across c00+p01–p04 →
+`cache/nwp/gefs_catchment_leads_ens.parquet` (+ committed copy at
+experiments/results/nwp/) with p_fc1..3 = ensemble mean (drop-in) and
+s_fc1..3 = member std (spread, ddof=0; grows 1.19→1.43→1.68 mm/day with
+lead — unused so far, stage 2). Tree rerun (`hgb_forecast_gefs.py L{1,2,3}
+<ens parquet> _ens`): median NSE 0.806→**0.816** / 0.551→**0.585** /
+0.466→**0.516**; paired dNSE vs single-member +0.005/+0.018/+0.036,
+better in 78/83/89% of catchments — the ensemble helps ~7× more at lead 3
+than lead 1, exactly where member noise is largest. Beats persistence in
+85/89/91%. Gap to the perfect-rain ceiling narrows to 0.043/0.249/0.305.
+**Caveat: extremes get smoothed** — AMAX bias worsens (−10.3/−28.4/−35.6
+vs single-member −7.8/−20.7/−23.5) and peak-day bias is ~1–2 pp worse
+(−29.9/−58.7/−65.9); averaging members damps exactly the heavy-rain
+outliers floods need. The mean is the right *point* input; the flood
+signal now lives in the spread → next: (a) Arc LSTM pair rerun with the
+ens parquet (--fcrain accepts it unchanged), (b) spread channel s_fc as
+an extra input, (c) quantile head on ensemble rain — the member-max or
+q90 of member rain may serve the tails better than the mean. Skill CSVs:
+forecast_skill_L{1,2,3}.csv (ens + mean scored side by side).
+
 ### ARC BOX — Phase 7 LSTM with forecast rain (pass-off, 2026-08-31)
 
 `git pull`, then run these two on the Arc box (each writes its own
