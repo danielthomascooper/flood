@@ -647,6 +647,24 @@ from the member-max run (82.5% peak coverage) - the first configuration
 to beat F2 on both point skill and flood bound.** Cards:
 lstm_fc_memmax_q_L1_{cards,calibration}.csv.
 
+**CPU cross-check of 7d + the composite scored as one object
+(2026-09-05, covered rows only, 4,543 AMAX events, gid × water-year with
+≥350 obs):** memmax AMAX q99 82.0% (Arc 82.5%), ens 71.8% (Arc 73.0%),
+pooled q95/q99 0.953/0.983 — replicated within event-set noise. The
+composite (q05–q75 from the ens run, q95/q99 from the memmax run) never
+crosses: memmax q95 < ens q75 in 0.00% of rows, memmax q95 < ens q50 in
+0.00%. Composite 90% band [ens q05, memmax q95]: coverage 0.933 at
+median width 0.319 mm/day (ens-only 0.908 / 0.276; memmax-only 0.917 /
+0.315) — the composite over-covers the band because the ens run's
+lower half is the collapsed one from 7c (q50 pooled 0.288), so for an
+operational envelope quote the upper half only: q95 0.953, q99 0.983
+pooled; annual peaks under q99 82.0%. Ens q50 as point on covered rows
++0.856. Lead 1 is settled; leads 2–3 need their own quantile heads on
+the Arc box (7c/7d pattern: train --lead L --autoreg --fcrain perfect
+--head quantile, then two inference passes with ens + memmax parquets)
+— expect the memmax lift to grow with lead as member spread does
+(s_fc 1.19→1.43→1.68 mm/day).
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
