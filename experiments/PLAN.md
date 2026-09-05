@@ -635,6 +635,18 @@ width vs the ens-rain run (73.0% / 0.275). Expectation from the tree:
 AMAX q99 back to ~80%+, width up ~30%. If it lands, the composite ladder
 (q50 from ens run, q90+ from memmax run) is the operational config.
 
+**ARC 7d DONE (2026-09-05): the LSTM scenario-matched ladder lands
+harder than the tree's.** 7c quantile checkpoint driven with the memmax
+parquet (inference only, `lstm_fc_memmax_q_L1`): AMAX-day q99 coverage
+73.0% -> **82.5%** (perfect 87.7%; tree memmax 79.8%; F2 no-rain 79.0%),
+pooled q95/q99 re-calibrated to 0.953/0.984, width +13% only
+(0.275 -> 0.311 mm/day; the tree paid +34%). q50 pooled 0.372 (biased
+high, as intended - not a median). **Composite lead-1 ladder confirmed
+as the operational config: q50 from the ens-mean run (+0.859), q90+
+from the member-max run (82.5% peak coverage) - the first configuration
+to beat F2 on both point skill and flood bound.** Cards:
+lstm_fc_memmax_q_L1_{cards,calibration}.csv.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at

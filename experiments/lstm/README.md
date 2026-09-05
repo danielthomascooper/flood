@@ -763,3 +763,30 @@ ladders under-covers (q50 pooled 0.28 vs F2's 0.52) — conditioning on
 future rain collapses the low quantiles toward the point while the
 upper tail stays calibrated; only the upper half of the ladder should
 be used operationally.
+
+**Phase 7d — the scenario-matched ladder (lead 1, 2026-09-05).** The CPU
+box showed the fix for 7c's overconfidence on the tree: drive the upper
+quantiles with **member-max rain** (max over c00+p01–p04, a wet scenario,
+not a forecast). Same recipe here: the 7c checkpoint driven with
+`gefs_catchment_leads_memmax.parquet`, inference only
+(`results/lstm_fc_memmax_q_L1/`; cards/calibration CSVs alongside).
+
+| ladder driver (lead 1) | q99 ≥ obs on AMAX days | q95 pooled | q99 pooled | 90% width mm/day | q50 usable? |
+|---|---|---|---|---|---|
+| ens-mean rain (7c) | 73.0% | 0.929 | 0.972 | 0.275 | yes, +0.859 |
+| **member-max rain (7d)** | **82.5%** | 0.953 | 0.984 | 0.311 | no (pooled 0.372, high) |
+| perfect rain | 87.7% | 0.960 | 0.993 | 0.278 | yes, +0.895 |
+| F2, no rain fc | 79.0% | 0.963 | 0.992 | 0.447 | yes, +0.806 |
+
+Member-max restores 65% of the peak coverage the ens mean lost
+(73.0→82.5 of the way to 87.7), re-calibrates the pooled upper tail, and
+costs only +13% width — cheaper and more effective than in the tree
+(69.6→79.8% at +34%): the LSTM turns the wet scenario into a
+better-shaped envelope because it weighs the rain against catchment
+state. **The operational lead-1 config is therefore the composite
+ladder: q50 (and the lower half, cautiously) from the ens-mean run,
+q90+ from the member-max run.** It beats the no-rain F2 ladder on both
+point skill (+0.859 vs +0.806) and annual-peak coverage (82.5% vs
+79.0%) — the first configuration to win both sides at once. With 50
+TIGGE members the max will be a much wetter scenario; member-q90 is the
+expected upper driver there.
