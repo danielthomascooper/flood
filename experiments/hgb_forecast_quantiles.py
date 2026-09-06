@@ -30,9 +30,19 @@ from evaluate import per_catchment
 ROOT = Path(__file__).resolve().parents[1]
 OUT = Path(__file__).resolve().parent / "results"
 MEMBERS = ["c00", "p01", "p02", "p03", "p04"]
-FC = ROOT / "cache/nwp/gefs_catchment_leads_members.parquet"
-ENS = ROOT / "cache/nwp/gefs_catchment_leads_ens.parquet"
+NWP = ROOT / "cache/nwp"
+ENS = NWP / "gefs_catchment_leads_ens.parquet"
+# rain sources that can drive the trained ladder (p_fc1 column each);
+# 'perfect' is observed rain, 'ens'/'memmax' the GEFS 5-member mean / max
+SOURCES = {"ens": ENS, "memmax": NWP / "gefs_catchment_leads_memmax.parquet",
+           "tigge": NWP / "tigge_catchment_leads_mean.parquet",
+           "tiggeq90": NWP / "tigge_catchment_leads_q90.parquet",
+           "tiggeq95": NWP / "tigge_catchment_leads_q95.parquet",
+           "tiggeq98": NWP / "tigge_catchment_leads_q98.parquet",
+           "tiggemax": NWP / "tigge_catchment_leads_max.parquet"}
+MODELS = OUT / "models"
 MODE = sys.argv[1] if len(sys.argv) > 1 else "score"
+import joblib
 ALPHAS = {"q50": 0.50, "q90": 0.90, "q95": 0.95, "q99": 0.99}
 
 BASE = dict(max_iter=400, learning_rate=0.08, max_leaf_nodes=63,
@@ -66,18 +76,15 @@ def build():
     print(f"  {len(DATA):,} rows in {time.time()-t0:.0f}s", flush=True)
     mi = pd.MultiIndex.from_arrays([GID, DATA.index.values],
                                    names=["gid", "date"])
-    ens = pd.read_parquet(ENS)[["p_fc1"]].reindex(mi).set_axis(DATA.index)
-    mem = pd.read_parquet(FC)[[f"p_fc1_{m}" for m in MEMBERS]] \
-        .reindex(mi).set_axis(DATA.index)
-    return DATA, GID, ens, mem
+    rain = {k: pd.read_parquet(v)[["p_fc1"]].reindex(mi).set_axis(DATA.index)["p_fc1"]
+            for k, v in SOURCES.items() if v.exists()}
+    return DATA, GID, rain
 
 
 def run(name):
     dst = OUT / f"forecast_{name}_L1.parquet"
-    if dst.exists():
-        print(f"{name}: exists, skipping"); return
     a = ALPHAS[name]
-    DATA, GID, ens, mem = build()
+    DATA, GID, rain = build()
     own = ["y_now"] + [f"y_lag{l}" for l in range(1, 7)] + ["y_mean30", "y_mean90"]
     don = [f"nb{r}_{l}" for r in range(3) for l in ("d0", "d1")]
     drop = own + don + ["p_next1", "target1"]
@@ -88,43 +95,68 @@ def run(name):
     ok = tgt.notna().values & DATA["y_now"].notna().values
     is_tr = np.asarray(DATA.index <= TRAIN_END) & ok
     is_te = np.asarray(DATA.index >= TEST_START) & ok
-    t0 = time.time()
-    m = HistGradientBoostingRegressor(**BASE, loss="quantile", quantile=a) \
-        .fit(DATA.loc[is_tr, cols], tgt[is_tr].values)
-    print(f"{name}: fitted in {time.time()-t0:.0f}s", flush=True)
+    MODELS.mkdir(exist_ok=True)
+    mpath = MODELS / f"hgb_fq_{name}_L1.joblib"
+    if mpath.exists():
+        m = joblib.load(mpath); print(f"{name}: loaded {mpath.name}", flush=True)
+    else:
+        t0 = time.time()
+        m = HistGradientBoostingRegressor(**BASE, loss="quantile", quantile=a) \
+            .fit(DATA.loc[is_tr, cols], tgt[is_tr].values)
+        joblib.dump(m, mpath)
+        print(f"{name}: fitted in {time.time()-t0:.0f}s -> {mpath.name}", flush=True)
 
     idx = pd.DatetimeIndex(DATA.index[is_te], name="date") + pd.Timedelta(days=1)
-    out = pd.DataFrame({"gid": GID[is_te], "obs": tgt[is_te].values,
-                        "covered": ens.loc[is_te, "p_fc1"].notna().values},
-                       index=idx)
+    if dst.exists():
+        out = pd.read_parquet(dst)
+        assert len(out) == is_te.sum()
+    else:
+        out = pd.DataFrame({"gid": GID[is_te], "obs": tgt[is_te].values,
+                            "covered": rain["ens"].loc[is_te].notna().values}, index=idx)
     Xte = DATA.loc[is_te, cols]
-    out["pred_perfect"] = np.clip(m.predict(Xte), 0, None).astype("float32")
+    if "pred_perfect" not in out:
+        out["pred_perfect"] = np.clip(m.predict(Xte), 0, None).astype("float32")
     Xte = Xte.copy()
-    Xte["p_next1"] = ens.loc[is_te, "p_fc1"].values
-    out["pred_ens"] = np.clip(m.predict(Xte), 0, None).astype("float32")
-    Xte["p_next1"] = mem.loc[is_te].max(axis=1).values
-    out["pred_memmax"] = np.clip(m.predict(Xte), 0, None).astype("float32")
+    for src, col in rain.items():
+        if f"pred_{src}" in out:
+            continue
+        Xte["p_next1"] = col.loc[is_te].values
+        out[f"pred_{src}"] = np.clip(m.predict(Xte), 0, None).astype("float32")
+        out[f"covered_{src}"] = col.loc[is_te].notna().values
+        print(f"{name}: predicted {src}", flush=True)
     out.to_parquet(dst)
-    print(f"{name}: wrote {dst.name}", flush=True)
+    print(f"{name}: wrote {dst.name} ({[c for c in out if c.startswith('pred_')]})", flush=True)
 
 
 if MODE != "score":
     run(MODE)
     sys.exit(0)
 
-# ---- score ---------------------------------------------------------------
+# ---- score: `score [subset]` — subset = ens (GEFS-covered rows, default) or
+# tigge (rows covered by BOTH archives, so every rain path is comparable)
+SUBSET = sys.argv[2] if len(sys.argv) > 2 else "ens"
 Q = {n: pd.read_parquet(OUT / f"forecast_{n}_L1.parquet") for n in ALPHAS}
 base = Q["q99"]
-cov = base.covered.values
-# never .loc on the date index (non-unique, 416 rows/date): go positional
+cov = base.covered.values.copy()
+if SUBSET != "ens":
+    cov &= base[f"covered_{SUBSET}"].values
+paths = [c[5:] for c in base.columns if c.startswith("pred_")
+         and (f"covered_{c[5:]}" not in base or base[f"covered_{c[5:]}"].values[cov].mean() > 0.99)]
+# AMAX days are defined on the FULL observed test record (gid x water-year
+# with >=350 obs days) and then restricted to covered rows, so a rain
+# archive with patchy month coverage is scored on the true annual peaks
+# that fall inside it. Never .loc on the date index (non-unique): positional.
+full = base[["gid", "obs"]].reset_index()
+full["wy"] = full.date.dt.year + (full.date.dt.month >= 10)
+nobs = full.groupby(["gid", "wy"]).obs.transform("size")
+amax_full = full[nobs >= 350].groupby(["gid", "wy"]).obs.idxmax().values
+is_amax = np.zeros(len(base), bool); is_amax[amax_full] = True
 sub = base[cov][["gid", "obs"]].reset_index()
-sub["wy"] = sub.date.dt.year + (sub.date.dt.month >= 10)
-nobs = sub.groupby(["gid", "wy"]).obs.transform("size")
-amax_pos = sub[nobs >= 350].groupby(["gid", "wy"]).obs.idxmax().values
+amax_pos = np.flatnonzero(is_amax[cov])
 oa = sub.obs.values[amax_pos]
 
 rows = []
-for path in ("perfect", "ens", "memmax"):
+for path in paths:
     for n, a in ALPHAS.items():
         p = Q[n][f"pred_{path}"].values[cov]
         pa = p[amax_pos]
@@ -137,14 +169,15 @@ for path in ("perfect", "ens", "memmax"):
                                          - Q["q50"][f"pred_{path}"].values[cov]))
                          if n == "q99" else np.nan})
 df = pd.DataFrame(rows)
-print(f"{len(amax_pos):,} AMAX events (covered rows only)")
-print(df.to_string(index=False))
-df.to_csv(OUT / "forecast_quantile_scenario_L1.csv", index=False)
+print(f"subset {SUBSET}: {cov.sum():,} rows, {len(amax_pos):,} AMAX events")
+print(df.round(3).to_string(index=False))
+csv = OUT / f"forecast_quantile_scenario_L1{'' if SUBSET == 'ens' else '_' + SUBSET}.csv"
+df.to_csv(csv, index=False)
 
 q50 = Q["q50"]
-for path in ("perfect", "ens"):
+for path in paths:
     nse = per_catchment(pd.DataFrame(
         {"gid": q50.gid.values[cov], "obs": q50.obs.values[cov],
          "pred": q50[f"pred_{path}"].values[cov]}, index=q50.index[cov])).nse
     print(f"q50-as-point ({path} rain): median NSE {nse.median():+.3f}")
-print("wrote forecast_quantile_scenario_L1.csv")
+print(f"wrote {csv.name}")

@@ -1,0 +1,67 @@
+=== chain start Sun Sep  6 10:52:03 AM BST 2026
+51 cubes -> 1461 unique init days, 50 members, 2010-10-01..2020-09-30
+cells per catchment: median 2, max 13
+mean: 607,776 rows; p_fc1 mean 2.47, p_fc2 mean 2.48, p_fc3 mean 2.52
+q90: 607,776 rows; p_fc1 mean 4.01, p_fc2 mean 4.46, p_fc3 mean 4.91
+max: 607,776 rows; p_fc1 mean 6.31, p_fc2 mean 7.71, p_fc3 mean 9.22
+building forecast frames...
+  7,901,088 rows in 24s
+L1: fitted in 272s
+L1: wrote gefs_tigge parquets
+building forecast frames...
+  7,901,088 rows in 23s
+L2: fitted in 260s
+L2: wrote gefs_tigge parquets
+building forecast frames...
+  7,901,088 rows in 23s
+L3: fitted in 255s
+L3: wrote gefs_tigge parquets
+building forecast frames...
+  7,901,088 rows in 23s
+L1: fitted in 251s
+L1: wrote gefs_tiggemax parquets
+building forecast frames...
+  7,901,088 rows in 24s
+L2: fitted in 261s
+L2: wrote gefs_tiggemax parquets
+building forecast frames...
+  7,901,088 rows in 24s
+L3: fitted in 269s
+L3: wrote gefs_tiggemax parquets
+building forecast frames...
+  7,901,088 rows in 22s
+q50: fitted in 507s -> hgb_fq_q50_L1.joblib
+q50: predicted ens
+q50: predicted memmax
+q50: predicted tigge
+q50: predicted tiggeq90
+q50: predicted tiggemax
+q50: wrote forecast_q50_L1.parquet (['pred_perfect', 'pred_ens', 'pred_memmax', 'pred_tigge', 'pred_tiggeq90', 'pred_tiggemax'])
+building forecast frames...
+  7,901,088 rows in 23s
+q90: fitted in 549s -> hgb_fq_q90_L1.joblib
+q90: predicted ens
+q90: predicted memmax
+q90: predicted tigge
+q90: predicted tiggeq90
+q90: predicted tiggemax
+q90: wrote forecast_q90_L1.parquet (['pred_perfect', 'pred_ens', 'pred_memmax', 'pred_tigge', 'pred_tiggeq90', 'pred_tiggemax'])
+building forecast frames...
+  7,901,088 rows in 23s
+q95: fitted in 535s -> hgb_fq_q95_L1.joblib
+q95: predicted ens
+q95: predicted memmax
+q95: predicted tigge
+q95: predicted tiggeq90
+q95: predicted tiggemax
+q95: wrote forecast_q95_L1.parquet (['pred_perfect', 'pred_ens', 'pred_memmax', 'pred_tigge', 'pred_tiggeq90', 'pred_tiggemax'])
+building forecast frames...
+  7,901,088 rows in 23s
+q99: fitted in 479s -> hgb_fq_q99_L1.joblib
+q99: predicted ens
+q99: predicted memmax
+q99: predicted tigge
+q99: predicted tiggeq90
+q99: predicted tiggemax
+q99: wrote forecast_q99_L1.parquet (['pred_perfect', 'pred_ens', 'pred_memmax', 'pred_tigge', 'pred_tiggeq90', 'pred_tiggemax'])
+=== CHAIN DONE Sun Sep  6 12:05:03 PM BST 2026

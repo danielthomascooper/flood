@@ -665,6 +665,80 @@ the Arc box (7c/7d pattern: train --lead L --autoreg --fcrain perfect
 — expect the memmax lift to grow with lead as member spread does
 (s_fc 1.19→1.43→1.68 mm/day).
 
+### Phase 7e (2026-09-06, CPU box): TIGGE 50-member ensemble — first verdict on the partial drip
+
+**Why now:** the ECDS drip is tape-bound and one-request-per-account
+(download is 24 s of a 3–6 h month; nothing on our side speeds it), and
+42 months (2013-03→2015-12 + 4 others) had silently FAILED on the Sep 1–2
+ECDS outage — 3 quick retries, wrapper never looped back. Fixes:
+`fetch_tigge.py` day-mode skips months already pulled whole, retries 5×
+with 2–10 min backoff, `--check` counts missing chunks; new
+`scripts/tigge_pull.sh` loops until nothing is missing, one day per
+request per ECMWF staff advice (one MARS tape per job), single worker.
+2,922 day-chunks (96 months) outstanding. The `covered` machinery lets
+the 51 cubes on disk (1,461 init days: 2010-10→2013-02 with gaps,
+2016-02→2017-05, 2020-01→09) be scored now.
+
+**Build:** `nwp/tigge_catchment.py` — boundary-weighted catchment mean
+per member on the 0.5° grid (median 2 cells, max 13; GEFS 0.25° had 4),
+reduced across 50 members → `tigge_catchment_leads_{mean,q90,q95,q98,max}
+.parquet` (mean carries s_fc spread; committed copies in results/nwp/).
+Member rain: mean 2.47 / q90 4.0 / q95 4.6 / q98 5.3 / max 6.3 mm/day
+at lead 1; the max grows to 9.2 by lead 3.
+
+**Point skill (tree, rows covered by BOTH archives = 497k rows, ~4
+water-years; comparisons valid within this subset only — perfect-rain
+is 0.829 here vs 0.859 on the full test):**
+
+| lead | persistence | GEFS 5-mean | **TIGGE 50-mean** | perfect | TIGGE max |
+|---|---|---|---|---|---|
+| 1 | 0.466 | 0.772 | **0.781** | 0.829 | 0.610 |
+| 2 | 0.069 | 0.517 | **0.540** | 0.792 | −0.474 |
+| 3 | −0.099 | 0.415 | **0.470** | 0.769 | −1.990 |
+
+TIGGE mean +0.009/+0.023/+0.055 over the GEFS 5-member mean; beats
+persistence 87/90/92%. Same pays-most-at-lead-3 shape as every ensemble
+result so far. Peak-day bias on covered true-AMAX days (1,109 events):
+GEFS mean −33/−62/−72, TIGGE mean −35/−66/−72, perfect −32/−36/−36 —
+the 50-member mean is smoother still and does NOT help peaks. TIGGE max
+as a point input: peak-day −18/−26/−23 but the median collapses (the
+50-member max is a very wet scenario) — use member quantiles, not max,
+with a large ensemble. (`forecast_ar_gefs_tigge{,max}_L{1,2,3}.parquet`,
+`forecast_skill_tigge_subset_L*.csv`; timing-aware peak metrics need
+complete water years and are NaN on this subset.)
+
+**Scenario ladder (lead 1, `hgb_forecast_quantiles.py` now saves its
+fitted models in results/models/ and predicts any rain source; AMAX days
+now defined on the full observed record then restricted to covered rows;
+`score tigge` = both-archive rows, 1,109 AMAX events):**
+
+| q99 driver | AMAX q99 | pooled q95 / q99 | width q99−q50 |
+|---|---|---|---|
+| perfect rain | 77.1% | 0.953 / 0.989 | 0.214 |
+| GEFS 5-mean | 69.8% | 0.924 / 0.968 | 0.210 |
+| TIGGE 50-mean | 67.0% | 0.926 / 0.969 | 0.209 |
+| **GEFS 5-max** | **79.3%** | 0.949 / 0.981 | **0.278** |
+| TIGGE q90 | 76.0% | 0.953 / 0.982 | 0.279 |
+| TIGGE q95 | 78.4% | 0.960 / 0.985 | 0.315 |
+| TIGGE q98 | 80.8% | 0.966 / 0.988 | 0.356 |
+| TIGGE max | 83.2% | 0.971 / 0.990 | 0.424 |
+
+**Verdict:** (1) Any ensemble MEAN leaves the rain-trained ladder
+overconfident (67–70% vs 77% perfect) — replicated a third time. (2)
+TIGGE turns the scenario driver into a dial: member q90→max trades width
+0.28→0.42 for peak coverage 76→83%, pooled q99 staying ≥0.98 throughout.
+(3) **The GEFS 5-member max sits on TIGGE's curve** — 79.3% at 0.278 vs
+TIGGE q90 76.0% at 0.279 — so at lead 1 the 50-member ensemble buys
+essentially nothing for the flood bound over the free 5-member one; its
+measurable value is point skill at leads 2–3 (+0.023/+0.055), where
+member noise is largest. TIGGE's coarser grid (0.5° vs 0.25°) is a
+handicap on this comparison. Recommended lead-1 ladder stays: ens-mean
+median + member-max (GEFS) or member-q95/q98 (TIGGE) upper tail — q98
+gives 80.8% at 0.356, a fair middle. (4) Re-score when the drip fills
+2013–2016 and 2017–2022; the both-archive subset will grow ~3× and the
+peak-timing metrics become computable. Lead-2/3 ladders remain untested
+in either family.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at

@@ -56,13 +56,13 @@ def fetch_chunk(year, month, days, leads, tag):
     if nc.exists():
         return tag, "exists"
     t0 = time.time()
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             cdsapi.Client(quiet=True).retrieve("tigge-forecasts",
                                                request(year, month, days, leads), str(grib))
             break
         except Exception as e:
-            err = e; time.sleep(60 * (attempt + 1))
+            err = e; time.sleep(120 * (attempt + 1))
     else:
         return tag, f"FAILED ({err})"
     cube = grib_to_cube(grib, leads)
@@ -79,6 +79,8 @@ def main():
     ap.add_argument("--chunk", choices=["month", "day"], default="month")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--leads", type=int, default=3)
+    ap.add_argument("--check", action="store_true",
+                    help="print the number of chunks still missing and exit")
     a = ap.parse_args()
     days = pd.date_range(a.start, a.end, freq="D")
     jobs = []
@@ -88,7 +90,12 @@ def main():
             jobs.append((y, m, [d.day for d in chunk], ym))
     else:
         for d in days:
+            if (OUT / f"ecmwf_pf_{d.strftime('%Y%m')}.nc").exists():
+                continue                     # month already pulled whole
             jobs.append((d.year, d.month, [d.day], d.strftime("%Y%m%d")))
+    if a.check:                              # how many chunks still missing?
+        todo = [j for j in jobs if not (OUT / f"ecmwf_pf_{j[3]}.nc").exists()]
+        print(len(todo)); return
     print(f"{len(jobs)} {a.chunk} requests, {a.workers} concurrent", flush=True)
     with ThreadPoolExecutor(max_workers=a.workers) as ex:
         for tag, msg in ex.map(lambda j: fetch_chunk(*j[:3], a.leads, j[3]), jobs):
