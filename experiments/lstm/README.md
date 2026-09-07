@@ -790,3 +790,37 @@ point skill (+0.859 vs +0.806) and annual-peak coverage (82.5% vs
 79.0%) — the first configuration to win both sides at once. With 50
 TIGGE members the max will be a much wetter scenario; member-q90 is the
 expected upper driver there.
+
+**Phase 7f-B — TIGGE 50-member through the LSTM (2026-09-07).** The
+partial TIGGE drip (607,776 gid-days, ~1/3 of test) through the existing
+checkpoints, inference only; everything below is scored on rows covered
+by BOTH archives (`lstm_7f_point_cards.csv`, `lstm_7f_ladder_subset.csv`).
+
+Point, TIGGE mean vs GEFS 5-member ens mean (median NSE, both-covered):
+L1 0.834 vs 0.835 (tie), L2 0.572 vs 0.561 (+0.011), **L3 0.494 vs
+0.443 (+0.051)** — the 50-member mean pays where member noise is
+largest, the tree's shape (+0.009/+0.023/+0.055) reproduced.
+
+Lead-1 ladder dial (1,109 both-covered AMAX events; driver → AMAX q99
+coverage @ 90% width mm/day):
+
+| driver | AMAX q99 | q95 pooled | q99 pooled | width |
+|---|---|---|---|---|
+| GEFS ens mean | 72.3% | 0.928 | 0.972 | 0.252 |
+| TIGGE mean | 69.7% | 0.930 | 0.972 | 0.252 |
+| GEFS member-max (5) | 82.7% | 0.953 | 0.983 | 0.286 |
+| TIGGE member-q98 | 84.0% | 0.966 | 0.989 | 0.320 |
+| **TIGGE member-max** | **86.4%** | 0.972 | 0.991 | 0.350 |
+| perfect rain | 85.9% | 0.959 | 0.992 | 0.255 |
+
+Readings. (1) Both means are equally overconfident (~70–72%) — more
+members make the *mean* no safer, only the point sharper. (2) The dial
+replicates in the LSTM and dominates the tree's: every rung gives more
+coverage at less width (tree q98 80.8%@0.356, max 83.2%@0.424).
+(3) **TIGGE member-max exceeds the perfect-rain ladder on peak coverage
+(86.4% vs 85.9%)** at +37% width — a wet scenario can out-cover the
+truth, which perfect rain cannot do because it is calibrated to it.
+The 50-member composite at lead 1: q50 from TIGGE/GEFS mean, tail from
+member-q98 (84.0% at +25% width) or member-max where the wider envelope
+is acceptable. Once the drip completes, member-q98 on the full window
+is the expected default upper driver.
