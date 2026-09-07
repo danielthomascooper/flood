@@ -55,6 +55,9 @@ def fetch_chunk(year, month, days, leads, tag):
     nc = OUT / f"ecmwf_pf_{tag}.nc"
     if nc.exists():
         return tag, "exists"
+    missing = OUT / f"ecmwf_pf_{tag}.missing"
+    if missing.exists():
+        return tag, "missing in MARS (marker)"
     t0 = time.time()
     for attempt in range(5):
         try:
@@ -62,7 +65,13 @@ def fetch_chunk(year, month, days, leads, tag):
                                                request(year, month, days, leads), str(grib))
             break
         except Exception as e:
-            err = e; time.sleep(120 * (attempt + 1))
+            err = e
+            if "MarsRuntimeError" in str(e) and len(days) == 1:
+                # deterministic: the date is not in the archive (TIGGE has
+                # known lost dates). Mark it so no pass ever retries it.
+                missing.write_text(str(e)[:2000])
+                return tag, "MISSING in MARS (marked, will not retry)"
+            time.sleep(120 * (attempt + 1))
     else:
         return tag, f"FAILED ({err})"
     cube = grib_to_cube(grib, leads)
@@ -94,7 +103,8 @@ def main():
                 continue                     # month already pulled whole
             jobs.append((d.year, d.month, [d.day], d.strftime("%Y%m%d")))
     if a.check:                              # how many chunks still missing?
-        todo = [j for j in jobs if not (OUT / f"ecmwf_pf_{j[3]}.nc").exists()]
+        todo = [j for j in jobs if not (OUT / f"ecmwf_pf_{j[3]}.nc").exists()
+                and not (OUT / f"ecmwf_pf_{j[3]}.missing").exists()]
         print(len(todo)); return
     print(f"{len(jobs)} {a.chunk} requests, {a.workers} concurrent", flush=True)
     with ThreadPoolExecutor(max_workers=a.workers) as ex:
