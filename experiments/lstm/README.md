@@ -790,3 +790,81 @@ point skill (+0.859 vs +0.806) and annual-peak coverage (82.5% vs
 79.0%) — the first configuration to win both sides at once. With 50
 TIGGE members the max will be a much wetter scenario; member-q90 is the
 expected upper driver there.
+
+**Phase 7f-B — TIGGE 50-member through the LSTM (2026-09-07).** The
+partial TIGGE drip (607,776 gid-days, ~1/3 of test) through the existing
+checkpoints, inference only; everything below is scored on rows covered
+by BOTH archives (`lstm_7f_point_cards.csv`, `lstm_7f_ladder_subset.csv`).
+
+Point, TIGGE mean vs GEFS 5-member ens mean (median NSE, both-covered):
+L1 0.834 vs 0.835 (tie), L2 0.572 vs 0.561 (+0.011), **L3 0.494 vs
+0.443 (+0.051)** — the 50-member mean pays where member noise is
+largest, the tree's shape (+0.009/+0.023/+0.055) reproduced.
+
+Lead-1 ladder dial (1,109 both-covered AMAX events; driver → AMAX q99
+coverage @ 90% width mm/day):
+
+| driver | AMAX q99 | q95 pooled | q99 pooled | width |
+|---|---|---|---|---|
+| GEFS ens mean | 72.3% | 0.928 | 0.972 | 0.252 |
+| TIGGE mean | 69.7% | 0.930 | 0.972 | 0.252 |
+| GEFS member-max (5) | 82.7% | 0.953 | 0.983 | 0.286 |
+| TIGGE member-q98 | 84.0% | 0.966 | 0.989 | 0.320 |
+| **TIGGE member-max** | **86.4%** | 0.972 | 0.991 | 0.350 |
+| perfect rain | 85.9% | 0.959 | 0.992 | 0.255 |
+
+Readings. (1) Both means are equally overconfident (~70–72%) — more
+members make the *mean* no safer, only the point sharper. (2) The dial
+replicates in the LSTM and dominates the tree's: every rung gives more
+coverage at less width (tree q98 80.8%@0.356, max 83.2%@0.424).
+(3) **TIGGE member-max exceeds the perfect-rain ladder on peak coverage
+(86.4% vs 85.9%)** at +37% width — a wet scenario can out-cover the
+truth, which perfect rain cannot do because it is calibrated to it.
+The 50-member composite at lead 1: q50 from TIGGE/GEFS mean, tail from
+member-q98 (84.0% at +25% width) or member-max where the wider envelope
+is acceptable. Once the drip completes, member-q98 on the full window
+is the expected default upper driver.
+
+**Phase 7f-A — the quantile ladder at leads 2-3 (2026-09-08).** Lead-2
+and lead-3 ladders trained on perfect rain (16 epochs, val +0.854 /
++0.848), then driven inference-only with GEFS ens-mean and member-max
+rain off the same checkpoints (`lstm_fc_{perfect,ens,memmax}_q_L{2,3}`;
+cards/calibration CSVs alongside). All 4,950 AMAX days; comparators:
+lead-1 row from 7c/7d.
+
+| lead | perfect: AMAX q99 @ width | ens: AMAX q99 @ width | memmax: AMAX q99 @ width | memmax lift |
+|---|---|---|---|---|
+| 1 | 87.7% @ 0.278 | 73.0% @ 0.275 | 82.5% @ 0.311 | +9.5 pp @ +13% |
+| 2 | 90.7% @ 0.328 | 39.0% @ 0.332 | 66.4% @ 0.455 | +27.4 pp @ +37% |
+| 3 | 87.3% @ 0.346 | 26.0% @ 0.354 | 60.8% @ 0.581 | +34.8 pp @ +64% |
+
+q50 point skill: perfect +0.884/+0.874 (ceiling still lead-invariant),
+ens +0.641/+0.581 (matches the 7b point runs), memmax +0.490/+0.329
+(unusable as a point, as at lead 1).
+
+Readings. (1) The perfect-rain ladder holds ~88-91% peak coverage at
+every lead and widens itself as trained lead grows (0.278 -> 0.346):
+given true rain, the quantile head prices the extra autoregressive
+uncertainty correctly. (2) Under real ens rain the overconfidence
+explodes with lead: 73.0 -> 39.0 -> 26.0%. The width barely moves
+(0.275 -> 0.354) while three days of rain error compound - by lead 3
+the q99 sits at 0.68x the observed flow on the median annual-peak day.
+This is 7c's mechanism measured across the lead range: the ladder was
+trained to price flow uncertainty given true rain and cannot see the
+rain error growing. (3) **The memmax lift grows with lead exactly as
+the ensemble spread does** (s_fc 1.19 -> 1.43 -> 1.68 mm/day): +9.5 ->
++27.4 -> +34.8 pp. The scenario-matched upper tail is the right
+mechanism and it scales. But it recovers a roughly constant ~55-65% of
+the ens->perfect gap while paying rapidly growing width (+13 -> +64%),
+so absolute coverage still decays: 82.5 -> 66.4 -> 60.8%. (4) Verdict
+on the pass-off question: **the composite ladder (ens q50 + memmax
+tail) holds as the best rain-driven configuration at every lead, but it
+only beats the no-rain flood bound at lead 1.** At leads 2-3 the
+memmax rungs (66.4% @ 0.455, 60.8% @ 0.581) fall below the lead-1
+no-rain F2 ladder (79.0% @ 0.447) on both coverage and width. With a
+5-member max the wet scenario is not wet enough to cover 2-3 days of
+compounding rain error. Two known escalations for the next pass: the
+TIGGE 50-member max (which out-covered even perfect rain at lead 1,
+86.4%) once the drip covers enough of test, and the s_fc spread channel
+/ forecast-archive fine-tune so the ladder prices rain error itself
+rather than borrowing it from a scenario.

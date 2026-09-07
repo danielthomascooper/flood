@@ -1,0 +1,22 @@
+device: xpu
+loading 416 basins...
+windows: 5,428,403 train / 454,550 val / 1,819,212 test
+epoch 0: loss 0.0640  val NSE(norm) +0.800  246s
+epoch 1: loss 0.0485  val NSE(norm) +0.806  241s
+epoch 2: loss 0.0456  val NSE(norm) +0.822  242s
+epoch 3: loss 0.0434  val NSE(norm) +0.806  241s
+epoch 4: loss 0.0426  val NSE(norm) +0.821  241s
+epoch 5: loss 0.0419  val NSE(norm) +0.818  242s
+epoch 6: loss 0.0417  val NSE(norm) +0.835  242s
+epoch 7: loss 0.0407  val NSE(norm) +0.846  245s
+epoch 8: loss 0.0408  val NSE(norm) +0.830  242s
+epoch 9: loss 0.0405  val NSE(norm) +0.822  242s
+epoch 10: loss 0.0400  val NSE(norm) +0.843  242s
+epoch 11: loss 0.0396  val NSE(norm) +0.846  241s
+epoch 12: loss 0.0394  val NSE(norm) +0.841  242s
+epoch 13: loss 0.0396  val NSE(norm) +0.829  242s
+epoch 14: loss 0.0392  val NSE(norm) +0.842  244s
+epoch 15: loss 0.0391  val NSE(norm) +0.854  242s
+test inference...
+wrote experiments\results\lstm_fc_perfect_q_L2\lstm_test_predictions.parquet (1,819,212 rows)
+score it back on the main machine with experiments/evaluate.py

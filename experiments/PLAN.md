@@ -768,6 +768,30 @@ inference-only reruns off that checkpoint with
 grow with lead as spread does (s_fc 1.19→1.43→1.68 mm/day)? Comparators:
 lead-1 ens 73.0% → memmax 82.5% AMAX q99; point LSTM+ens 0.659/0.594.
 
+**ARC BOX STATUS — 7f COMPLETE (2026-09-08).** Job B (TIGGE, both-archive
+rows): points L1/L2/L3 = 0.834/0.572/0.494 vs GEFS-ens 0.835/0.561/0.443 -
+tie at L1, +0.051 at L3, the tree's more-members-pay-with-lead shape
+reproduced. Lead-1 ladder dial (AMAX q99 @ 90% width): TIGGE mean 69.7%
+@ 0.252, member-q98 84.0% @ 0.320, member-max 86.4% @ 0.350 - the
+50-member max OUT-COVERS perfect rain (85.9% on that subset); every rung
+beats the tree's dial on coverage and width. Job A (ladders at L2-3,
+all 4,950 AMAX days, q99 cov @ width): perfect 90.7% @ 0.328 / 87.3% @
+0.346 (ceiling lead-invariant, ladder self-widens with trained lead);
+ens 39.0% @ 0.332 / 26.0% @ 0.354 (overconfidence explodes - width
+frozen while 2-3 days of rain error compound); memmax 66.4% @ 0.455 /
+60.8% @ 0.581. **Answer to the pass-off question: yes, the memmax lift
+grows with lead exactly as spread does (+9.5/+27.4/+34.8 pp for s_fc
+1.19/1.43/1.68), and the composite ladder stays the best rain-driven
+config at every lead - but it only beats the no-rain flood bound at
+lead 1** (L2-3 memmax < F2's 79.0% @ 0.447 on both coverage and width).
+The 5-member max is not wet enough for 2-3 days of compounding error.
+Escalations that the data already endorses: TIGGE member-q98/max as the
+upper driver once the drip fills (86.4% at L1), and (b) the s_fc spread
+channel / archive fine-tune so the ladder prices rain error itself.
+Runs: lstm_fc_tigge_L1-3, lstm_fc_tigge{,q98,max}_q_L1,
+lstm_fc_{perfect,ens,memmax}_q_L{2,3}; CSVs lstm_7f_point_cards,
+lstm_7f_ladder_subset, lstm_fc_*_q_L{2,3}_{cards,calibration}.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
