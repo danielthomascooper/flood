@@ -739,6 +739,35 @@ gives 80.8% at 0.356, a fair middle. (4) Re-score when the drip fills
 peak-timing metrics become computable. Lead-2/3 ladders remain untested
 in either family.
 
+**ARC PASS-OFF (7f) — two jobs, cheap one first.** All parquets below
+are committed under experiments/results/nwp/ with p_fc1..3 (+ s_fc for
+the means); `--fcrain` takes any of them unchanged. Rows outside a
+parquet's coverage keep observed rain and come out `covered=False` —
+score covered-only, and for TIGGE compare against the tree's
+both-archive subset numbers in "Phase 7e" (tree TIGGE-mean
+0.781/0.540/0.470 vs GEFS-mean 0.772/0.517/0.415 on those rows).
+
+*(B, inference-only, ~15 min per run):* copy each ceiling checkpoint
+dir and rerun with the same flags but a new --fcrain / --out:
+- point, leads 1–3: `lstm_fc_perfect_L{1,2,3}` →
+  `--fcrain .../tigge_catchment_leads_mean.parquet --out lstm_fc_tigge_L{L}`
+- ladder, lead 1: `lstm_fc_perfect_q_L1` → three runs with
+  `tigge_catchment_leads_{mean,q98,max}.parquet` →
+  `lstm_fc_tigge{,q98,max}_q_L1`. Report AMAX-day q99 coverage, pooled
+  q95/q99 and 90% width on rows covered by BOTH tigge and ens (the
+  tree's dial was q90/q95/q98/max = 76.0/78.4/80.8/83.2% at width
+  0.279/0.315/0.356/0.424, GEFS memmax 79.3% at 0.278 on those rows).
+
+*(A, training, ~2 h each):* leads 2 and 3 quantile ladders, the 7c/7d
+pattern: `train_lstm.py --lead L --autoreg --fcrain perfect --head
+quantile --epochs 16 --out lstm_fc_perfect_q_L{L}`, then two
+inference-only reruns off that checkpoint with
+`gefs_catchment_leads_ens.parquet` and `gefs_catchment_leads_memmax.parquet`
+→ `lstm_fc_{ens,memmax}_q_L{L}`. Question: does the composite ladder
+(ens median + memmax tail) hold at leads 2–3, and does the memmax lift
+grow with lead as spread does (s_fc 1.19→1.43→1.68 mm/day)? Comparators:
+lead-1 ens 73.0% → memmax 82.5% AMAX q99; point LSTM+ens 0.659/0.594.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
