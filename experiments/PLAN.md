@@ -792,6 +792,40 @@ Runs: lstm_fc_tigge_L1-3, lstm_fc_tigge{,q98,max}_q_L1,
 lstm_fc_{perfect,ens,memmax}_q_L{2,3}; CSVs lstm_7f_point_cards,
 lstm_7f_ladder_subset, lstm_fc_*_q_L{2,3}_{cards,calibration}.
 
+### Phase 7g (launched 2026-09-08, CPU box): GEFS reforecast for the TRAINING years — unblocks the spread channel and the Taccari fine-tune
+
+Every forecast run so far trains on observed future rain and swaps a
+forecast in at test time, so the model has never seen a forecast during
+training and treats the rain channel as exact — the root of the ladder
+overconfidence (Arc 7c/7f: ens-driven q99 covers 73% at L1, 39%/26% at
+L2/3). The fix is the Taccari 2026 recipe (pre-train on observed rain,
+fine-tune on the forecast archive), which needs forecasts in the
+training years. GEFS v12 reforecast starts 2000-01 with the same five
+members, so the training period IS covered — it simply hadn't been
+pulled. Pull launched: c00 then p01–p04, 2000-01-01→2010-09-30, leads
+1–3 → cache/nwp/gefs_{m}_{YYYYMM}.nc (129 cubes/member; log
+cache/nwp/pull_reforecast_train.log; resume-safe, rerun the same loop to
+fill gaps; ~12 h/member on this line, shares bandwidth with the TIGGE
+drip). When done: extend gefs_ensemble_mean.py's glob to the new years
+(it already globs gefs_{m}_*.nc — just rerun) so the ens/memmax/members
+parquets span 2000→2022, then
+
+- **CPU:** tree with s_fc1..L as train-time features (train years now
+  have spread) — the first honest test of "spread as an uncertainty
+  feature"; and a quantile ladder trained on FORECAST rain (train rows
+  2000-01→TRAIN_END use GEFS mean in p_next, not observed) vs the
+  obs-trained one — does the ladder learn to price rain error?
+- **Arc:** from each ceiling checkpoint, fine-tune N epochs with
+  --fcrain = ens parquet over the training years only (train_lstm.py
+  needs a --fcrain-train switch: forecast rain in the window for train
+  rows too, observed where the archive has no row), evaluate 2010→2022
+  exactly as now. Point pair: lstm_fc_ens_L{1,2,3} vs fine-tuned.
+  Ladder pair: lstm_fc_ens_q_L1 (73.0%) vs fine-tuned quantile head —
+  the prize is coverage without the memmax width, and at leads 2–3.
+Caveat: GEFS v12 reforecast is a fixed-model archive, cleaner than a
+live feed; fine-tune gains may not transfer to an operational GEFS with
+model upgrades.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
