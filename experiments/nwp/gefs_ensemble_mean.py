@@ -93,6 +93,10 @@ for L in lead_days:
     out[f"p_fc{L}"] = cols.mean(axis=1)
     out[f"s_fc{L}"] = cols.std(axis=1, ddof=0)
 out = pd.DataFrame(out).astype("float32").sort_index()
+memmax = pd.DataFrame({f"p_fc{L}": stack.xs(f"L{L}", axis=1, level=1).max(axis=1)
+                       for L in lead_days}).astype("float32").sort_index()
+for d in (ROOT / "cache/nwp", ROOT / "experiments/results/nwp"):
+    memmax.to_parquet(d / "gefs_catchment_leads_memmax.parquet")
 
 dst = ROOT / "cache/nwp/gefs_catchment_leads_ens.parquet"
 out.to_parquet(dst)

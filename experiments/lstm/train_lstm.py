@@ -187,6 +187,14 @@ def main():
                          "genuinely-future steps; rows whose issue day has no "
                          "forecast keep observed rain and are marked "
                          "covered=False in the output parquet")
+    ap.add_argument("--fcrain-train", action="store_true",
+                    help="also put the --fcrain forecast into TRAIN/VAL windows "
+                         "wherever the archive covers them (observed rain elsewhere) "
+                         "- the Taccari fine-tune / mixed regime; needs a parquet --fcrain")
+    ap.add_argument("--init-from", default="",
+                    help="run dir whose lstm_checkpoint.pt seeds the weights (fresh "
+                         "optimizer at --lr, epoch 0) - fine-tune from a ceiling run; "
+                         "ignored when --out already holds a checkpoint")
     ap.add_argument("--autoreg", action="store_true",
                     help="add the target's own normalised observed flow as an "
                          "input channel at every step of the window (known up "
@@ -298,12 +306,24 @@ def main():
         model.load_state_dict(state["model"]); opt.load_state_dict(state["opt"])
         start_ep = state["epoch"] + 1
         print(f"resumed from epoch {start_ep}", flush=True)
+    elif args.init_from:
+        src = Path(args.init_from) / "lstm_checkpoint.pt"
+        model.load_state_dict(torch.load(src, map_location=dev)["model"])
+        print(f"weights initialised from {src} (fresh optimizer, lr {args.lr})", flush=True)
+
+    FC_TR = FC if (args.fcrain_train and fc_tab is not None) else None
+    if args.fcrain_train:
+        assert fc_tab is not None, "--fcrain-train needs a parquet --fcrain"
+        n_cov = sum(int(COV[b][t]) for b, t in tr_index)
+        print(f"forecast rain in training windows: {n_cov:,} of {len(tr_index):,} "
+              f"covered by the archive (observed rain elsewhere)", flush=True)
 
     def run_eval(index, sample=50_000):
         idx = [index[i] for i in rng.choice(len(index),
                                             min(sample, len(index)), replace=False)]
-        dl = torch.utils.data.DataLoader(Windows(X, Y, S, idx, SEQ, lead=args.lead), batch_size=1024,
-                                         num_workers=args.workers)
+        dl = torch.utils.data.DataLoader(
+            Windows(X, Y, S, idx, SEQ, lead=args.lead, FC=FC_TR, fc0=n_dyn - args.lead),
+            batch_size=1024, num_workers=args.workers)
         model.eval(); preds, obs = [], []
         with torch.no_grad():
             for xb, yb, _ in dl:
@@ -312,7 +332,7 @@ def main():
         p, o = np.concatenate(preds), np.concatenate(obs)
         return 1 - ((o - p) ** 2).sum() / ((o - o.mean()) ** 2).sum()
 
-    tr_ds = Windows(X, Y, S, tr_index, SEQ, lead=args.lead)
+    tr_ds = Windows(X, Y, S, tr_index, SEQ, lead=args.lead, FC=FC_TR, fc0=n_dyn - args.lead)
     for ep in range(start_ep, args.epochs):
         sampler = torch.utils.data.RandomSampler(
             tr_ds, replacement=True, num_samples=args.steps * args.batch)

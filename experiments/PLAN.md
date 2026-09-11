@@ -826,6 +826,55 @@ Caveat: GEFS v12 reforecast is a fixed-model archive, cleaner than a
 live feed; fine-tune gains may not transfer to an operational GEFS with
 model upgrades.
 
+**Phase 7g — data landed 2026-09-09, tooling ready 2026-09-12.** GEFS
+reforecast c00+p01–p04 for 2000-01→2010-09 pulled (129 cubes/member, 0
+errors). `nwp/gefs_ensemble_mean.py` rerun: ens/memmax/members parquets
+now span 2000-01→2022-09 (8,043 init days, 3.35M rows; committed copies
+in results/nwp/). Training windows 2000→2010 (~22% of the 40-year train
+set) now carry forecast rain + spread.
+
+*CPU (running, `hgb_forecast_fctrain.py`, chain log
+results/phase7g_chain.log):* point variants at leads 1–3 — obs_2000
+(data-size control), fc_2000 (forecast-trained), fcs_2000 (+ s_fc spread
+features), mixed (obs <2000, GEFS ≥2000 = tree analogue of
+pre-train+fine-tune), mixeds — all driven with ens-mean rain at test,
+reference = obs-trained ar_gefs_ens; then lead-1 ladders (q50/90/95/99)
+for fc_2000 / fcs_2000 / mixeds, driven with ens AND memmax rain.
+Score: `hgb_forecast_fctrain.py score` / `scoreq`.
+
+**ARC PASS-OFF (7g, the Taccari fine-tune).** `train_lstm.py` has two
+new flags, smoke-tested on CPU: `--fcrain-train` puts the --fcrain
+forecast into TRAIN and VAL windows wherever the archive covers them
+(observed rain elsewhere → the mixed regime, 2000-2010 forecast /
+1970-1999 observed); `--init-from DIR` seeds the weights from DIR's
+lstm_checkpoint.pt with a fresh optimizer at --lr (ignored if --out
+already has a checkpoint). Pairs, exactly matched to existing runs:
+
+```
+# point, lead L in 1 2 3: fine-tune the ceiling checkpoint on forecast rain
+python experiments/lstm/train_lstm.py --lead L --autoreg \
+  --fcrain experiments/results/nwp/gefs_catchment_leads_ens.parquet \
+  --fcrain-train --init-from experiments/results/lstm_fc_perfect_L{L} \
+  --lr 2e-4 --epochs 4 --out experiments/results/lstm_ft_ens_L{L}
+# ladder, lead 1: same from the quantile ceiling checkpoint
+python experiments/lstm/train_lstm.py --lead 1 --autoreg --head quantile \
+  --fcrain experiments/results/nwp/gefs_catchment_leads_ens.parquet \
+  --fcrain-train --init-from experiments/results/lstm_fc_perfect_q_L1 \
+  --lr 2e-4 --epochs 4 --out experiments/results/lstm_ft_ens_q_L1
+# optional control: same 4 extra epochs on OBSERVED rain (no --fcrain-train,
+# --fcrain perfect) from the same checkpoint, to separate "more epochs" from
+# "forecast rain" -> lstm_ft_perfect_L{L}
+```
+Comparators: point lstm_fc_ens 0.862/0.659/0.594 (test driven with ens
+rain, never trained on it); ladder lstm_fc_ens_q_L1 (q99 AMAX 73.0%,
+width 0.275) and memmax 82.5% @ 0.311. The prize: does a ladder that has
+SEEN forecast rain widen itself — coverage back toward 82% at ens-mean
+width, and holding at leads 2–3 where the frozen-width ladder fell to
+39%/26%? If 4 epochs at 2e-4 barely move, try --lr 5e-4 --epochs 8;
+watch val NSE (now computed with forecast rain in val windows, so it is
+not comparable to the ceiling runs' val — compare test cards only).
+Caveat for the write-up: GEFS v12 reforecast is a fixed-model archive.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
