@@ -108,7 +108,7 @@ def train_frame(DATA, variant, L):
         mask = pre & since2000 & has_fc
     else:                                          # mixed
         mask = pre & (~since2000 | has_fc)
-    X = DATA.loc[mask, columns(DATA, L, variant.endswith("s") and variant != "obs_2000")].copy()
+    X = DATA.loc[mask, columns(DATA, L, variant in ("fcs_2000", "mixeds"))].copy()
     if variant != "obs_2000":                      # forecast rain where the archive has it
         sub = DATA.loc[mask]
         for k in range(1, L + 1):
