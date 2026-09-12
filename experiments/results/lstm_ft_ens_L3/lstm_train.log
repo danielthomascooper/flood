@@ -1,0 +1,13 @@
+device: xpu
+loading 416 basins...
+forecast rain: c:\Users\DanielCooper\flood\experiments\results\nwp\gefs_catchment_leads_ens.parquet
+windows: 5,428,023 train / 454,550 val / 1,819,212 test
+weights initialised from c:\Users\DanielCooper\flood\experiments\results\lstm_fc_perfect_L3\lstm_checkpoint.pt (fresh optimizer, lr 0.0002)
+forecast rain in training windows: 1,171,377 of 5,428,023 covered by the archive (observed rain elsewhere)
+epoch 0: loss 0.2165  val NSE(norm) +0.545  370s
+epoch 1: loss 0.2080  val NSE(norm) +0.560  374s
+epoch 2: loss 0.2042  val NSE(norm) +0.562  341s
+epoch 3: loss 0.2103  val NSE(norm) +0.558  350s
+test inference...
+wrote c:\Users\DanielCooper\flood\experiments\results\lstm_ft_ens_L3\lstm_test_predictions.parquet (1,819,212 rows)
+score it back on the main machine with experiments/evaluate.py

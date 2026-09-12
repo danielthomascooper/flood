@@ -868,3 +868,58 @@ TIGGE 50-member max (which out-covered even perfect rain at lead 1,
 86.4%) once the drip covers enough of test, and the s_fc spread channel
 / forecast-archive fine-tune so the ladder prices rain error itself
 rather than borrowing it from a scenario.
+
+**Phase 7g — the Taccari fine-tune (2026-09-12).** The GEFS v12
+reforecast now covers the training years (2000-2010, 5 members), so the
+mixed regime became trainable: `--fcrain-train` puts ens-mean forecast
+rain into train/val windows where the archive covers them (1.17 M of
+5.43 M windows, 21.6%), `--init-from` seeds from a ceiling checkpoint
+with a fresh optimizer. All runs 4 epochs at lr 2e-4; controls repeat
+the 4 epochs on observed rain to price "more epochs" separately
+(`lstm_ft_{ens,perfect}_L{1,2,3}`, `lstm_ft_ens_q_L1`;
+`lstm_7g_cards.csv`, `lstm_7g_vs_baseline.csv`,
+`lstm_ft_ens_q_L1_{cards,calibration}.csv`).
+
+Points, exactly paired on identical rows (median NSE; delta = paired
+per-catchment median):
+
+| lead | fine-tuned | baseline (fc_ens) | paired delta | ft better on | control delta (obs rain) |
+|---|---|---|---|---|---|
+| 1 | +0.868 | +0.862 | +0.007 | 87% | +0.006 (+0.908 vs ceiling +0.901) |
+| 2 | +0.679 | +0.659 | +0.017 | 91% | +0.005 (+0.888 vs +0.880) |
+| 3 | +0.616 | +0.594 | +0.014 | 92% | +0.004 (+0.879 vs +0.873) |
+
+The lead-1 ladder (the prize run):
+
+| lead-1 ladder | AMAX q99 | 90% width | q50 point | q95 pooled |
+|---|---|---|---|---|
+| frozen (7c) | 73.0% | 0.275 | +0.859 | 0.929 |
+| member-max scenario (7d) | 82.5% | 0.311 | q50 unusable | 0.953 |
+| **fine-tuned on fc rain (7g)** | **78.4%** | **0.273** | **+0.873** | **0.950** |
+| no-rain F2 | 79.0% | 0.447 | +0.806 | 0.963 |
+| perfect rain | 87.7% | 0.278 | +0.895 | 0.960 |
+
+Readings. (1) **The fine-tuned ladder repairs the 7c overconfidence at
+zero width cost**: +5.4 pp AMAX coverage at width 0.273 (vs 0.275
+frozen), pooled q95 exactly nominal (0.950), and q50 point skill UP to
++0.873 - the best real-rain lead-1 point in the project, above even the
+point fine-tune. It matches the no-rain F2 flood bound (79.0%) at 39%
+less width while beating it by +0.067 on the median. This is
+calibration learned from seeing forecast error in training - the thing
+the member-max scenario bought with +13% width and a destroyed median.
+(2) The point gains are small but extraordinarily broad (better on
+87-92% of catchments) and they grow with lead. The controls decompose
+them: at lead 1 extra epochs explain the whole gain (+0.006 of +0.007);
+at lead 2 forecast rain contributes ~+0.012 of +0.017 beyond the
++0.005 epoch effect - regime adaptation pays where rain error lives.
+(3) The lead-1 control's top-1% NSE went positive (+0.015, ceiling
+-0.172) - the 16-epoch budget was slightly short for the tail
+everywhere; worth folding 20 epochs into future ceilings. Caveats: GEFS
+v12 reforecast is a fixed-model archive (operational GEFS drifts), and
+the ladder fine-tune has no obs-rain control (a ladder control would
+not widen - it was already obs-calibrated - but the exact split is
+unmeasured). Next escalations, in order of expected value: member-max
+rain through the fine-tuned ladder checkpoint (combine 7d's tail with
+7g's calibration), the same fine-tune for the lead-2/3 ladders (where
+frozen coverage fell to 39/26%), and the s_fc spread channel now that
+training-years spread exists.

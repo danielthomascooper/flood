@@ -875,6 +875,28 @@ watch val NSE (now computed with forecast rain in val windows, so it is
 not comparable to the ceiling runs' val — compare test cards only).
 Caveat for the write-up: GEFS v12 reforecast is a fixed-model archive.
 
+**ARC BOX STATUS — 7g COMPLETE (2026-09-12).** All seven runs done (4 ep
+at 2e-4 each; mixed regime = 1.17M of 5.43M training windows covered).
+**The ladder answer is yes: fine-tuned on forecast rain it re-calibrates
+itself at ZERO width cost - AMAX q99 73.0 -> 78.4% at 90% width 0.273
+(frozen: 0.275), pooled q95 exactly nominal (0.950), and q50 point skill
+UP to +0.873** (best real-rain lead-1 point; fc_ens_q was +0.859). It
+matches the no-rain F2 bound (79.0%) at 39% less width. Points, paired on
+identical rows: +0.868/+0.679/+0.616 vs fc_ens +0.862/+0.659/+0.594
+(deltas +0.007/+0.017/+0.014, ft better on 87/91/92% of catchments).
+Controls price "4 more epochs" at +0.006/+0.005/+0.004 (obs-rain
+test vs ceilings) - so at lead 1 the point gain is all epochs, at lead 2+
+forecast rain contributes ~+0.012 beyond the epoch effect. Bonus: the L1
+control's top-1% NSE went POSITIVE (+0.015 vs ceiling -0.172) - 16 epochs
+was short for the tail; consider 20-epoch ceilings. Caveats noted in the
+README: fixed-model reforecast archive; no obs-rain ladder control.
+Recommended next, in order: (a) memmax rain through the FINE-TUNED ladder
+checkpoint (7d tail + 7g calibration, inference-only, 15 min); (b) the
+same fine-tune for the L2/L3 ladders (frozen coverage 39/26% - the
+largest expected gain in the project right now); (c) s_fc spread channel.
+Runs lstm_ft_{ens,perfect}_L{1,2,3} + lstm_ft_ens_q_L1; CSVs
+lstm_7g_cards, lstm_7g_vs_baseline, lstm_ft_ens_q_L1_{cards,calibration}.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
