@@ -1,0 +1,117 @@
+=== chain start Sat Sep 12 12:42:26 AM BST 2026
+building forecast frames...
+  7,901,088 rows in 22s
+obs_2000 L1: 1,626,993 train rows, fitted in 67s
+obs_2000 L1: wrote forecast_fctrain_obs_2000_L1.parquet
+fc_2000 L1: 1,626,993 train rows, fitted in 58s
+fc_2000 L1: wrote forecast_fctrain_fc_2000_L1.parquet
+fcs_2000 L1: 1,626,993 train rows, fitted in 55s
+Traceback (most recent call last):
+  File "/home/habrt/source/flood/experiments/hgb_forecast_fctrain.py", line 188, in <module>
+    run_point(int(MODE[1])); sys.exit(0)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/habrt/source/flood/experiments/hgb_forecast_fctrain.py", line 143, in run_point
+    "pred": np.clip(m.predict(Xte), 0, None).astype("float32"),
+                    ^^^^^^^^^^^^^^
+  File "/home/habrt/source/flood/.venv/lib/python3.12/site-packages/sklearn/ensemble/_hist_gradient_boosting/gradient_boosting.py", line 1711, in predict
+    return self._loss.link.inverse(self._raw_predict(X).ravel())
+                                   ^^^^^^^^^^^^^^^^^^^^
+  File "/home/habrt/source/flood/.venv/lib/python3.12/site-packages/sklearn/ensemble/_hist_gradient_boosting/gradient_boosting.py", line 1201, in _raw_predict
+    X = self._preprocess_X(X, reset=False)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/habrt/source/flood/.venv/lib/python3.12/site-packages/sklearn/ensemble/_hist_gradient_boosting/gradient_boosting.py", line 266, in _preprocess_X
+    return validate_data(self, X, reset=False, **check_X_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/habrt/source/flood/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py", line 3013, in validate_data
+    _check_feature_names(_estimator, X, reset=reset)
+  File "/home/habrt/source/flood/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py", line 2865, in _check_feature_names
+    raise ValueError(message)
+ValueError: The feature names should match those that were passed during fit.
+Feature names unseen at fit time:
+- s_next1
+
+=== relaunch Sat Sep 12 12:47:12 AM BST 2026
+=== chain start Sat Sep 12 12:47:12 AM BST 2026
+building forecast frames...
+  7,901,088 rows in 22s
+obs_2000 L1: exists, skipping
+fc_2000 L1: exists, skipping
+fcs_2000 L1: 1,626,993 train rows, fitted in 56s
+fcs_2000 L1: wrote forecast_fctrain_fcs_2000_L1.parquet
+mixed L1: 6,015,656 train rows, fitted in 266s
+mixed L1: wrote forecast_fctrain_mixed_L1.parquet
+mixeds L1: 6,015,656 train rows, fitted in 241s
+mixeds L1: wrote forecast_fctrain_mixeds_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+obs_2000 L2: 1,626,861 train rows, fitted in 65s
+obs_2000 L2: wrote forecast_fctrain_obs_2000_L2.parquet
+fc_2000 L2: 1,626,861 train rows, fitted in 62s
+fc_2000 L2: wrote forecast_fctrain_fc_2000_L2.parquet
+fcs_2000 L2: 1,626,861 train rows, fitted in 64s
+fcs_2000 L2: wrote forecast_fctrain_fcs_2000_L2.parquet
+mixed L2: 6,014,907 train rows, fitted in 266s
+mixed L2: wrote forecast_fctrain_mixed_L2.parquet
+mixeds L2: 6,014,907 train rows, fitted in 297s
+mixeds L2: wrote forecast_fctrain_mixeds_L2.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+obs_2000 L3: 1,626,752 train rows, fitted in 73s
+obs_2000 L3: wrote forecast_fctrain_obs_2000_L3.parquet
+fc_2000 L3: 1,626,752 train rows, fitted in 69s
+fc_2000 L3: wrote forecast_fctrain_fc_2000_L3.parquet
+fcs_2000 L3: 1,626,752 train rows, fitted in 73s
+fcs_2000 L3: wrote forecast_fctrain_fcs_2000_L3.parquet
+mixed L3: 6,014,281 train rows, fitted in 283s
+mixed L3: wrote forecast_fctrain_mixed_L3.parquet
+mixeds L3: 6,014,281 train rows, fitted in 293s
+mixeds L3: wrote forecast_fctrain_mixeds_L3.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+fc_2000 q50: 1,626,993 train rows, fitted in 145s
+fc_2000 q50: wrote forecast_fq_fc_2000_q50_L1.parquet
+building forecast frames...
+  7,901,088 rows in 22s
+fc_2000 q90: 1,626,993 train rows, fitted in 136s
+fc_2000 q90: wrote forecast_fq_fc_2000_q90_L1.parquet
+building forecast frames...
+  7,901,088 rows in 22s
+fc_2000 q95: 1,626,993 train rows, fitted in 132s
+fc_2000 q95: wrote forecast_fq_fc_2000_q95_L1.parquet
+building forecast frames...
+  7,901,088 rows in 21s
+fc_2000 q99: 1,626,993 train rows, fitted in 111s
+fc_2000 q99: wrote forecast_fq_fc_2000_q99_L1.parquet
+building forecast frames...
+  7,901,088 rows in 22s
+fcs_2000 q50: 1,626,993 train rows, fitted in 147s
+fcs_2000 q50: wrote forecast_fq_fcs_2000_q50_L1.parquet
+building forecast frames...
+  7,901,088 rows in 22s
+fcs_2000 q90: 1,626,993 train rows, fitted in 140s
+fcs_2000 q90: wrote forecast_fq_fcs_2000_q90_L1.parquet
+building forecast frames...
+  7,901,088 rows in 22s
+fcs_2000 q95: 1,626,993 train rows, fitted in 133s
+fcs_2000 q95: wrote forecast_fq_fcs_2000_q95_L1.parquet
+building forecast frames...
+  7,901,088 rows in 21s
+fcs_2000 q99: 1,626,993 train rows, fitted in 115s
+fcs_2000 q99: wrote forecast_fq_fcs_2000_q99_L1.parquet
+building forecast frames...
+  7,901,088 rows in 22s
+mixeds q50: 6,015,656 train rows, fitted in 561s
+mixeds q50: wrote forecast_fq_mixeds_q50_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+mixeds q90: 6,015,656 train rows, fitted in 522s
+mixeds q90: wrote forecast_fq_mixeds_q90_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+mixeds q95: 6,015,656 train rows, fitted in 516s
+mixeds q95: wrote forecast_fq_mixeds_q95_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+mixeds q99: 6,015,656 train rows, fitted in 480s
+mixeds q99: wrote forecast_fq_mixeds_q99_L1.parquet
+=== CHAIN DONE Sat Sep 12 02:32:31 AM BST 2026

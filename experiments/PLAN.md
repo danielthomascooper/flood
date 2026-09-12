@@ -897,6 +897,62 @@ largest expected gain in the project right now); (c) s_fc spread channel.
 Runs lstm_ft_{ens,perfect}_L{1,2,3} + lstm_ft_ens_q_L1; CSVs
 lstm_7g_cards, lstm_7g_vs_baseline, lstm_ft_ens_q_L1_{cards,calibration}.
 
+**CPU 7g DONE (2026-09-12, `hgb_forecast_fctrain.py`, cards
+forecast_fctrain_cards.csv / forecast_fctrain_ladder_L1.csv; GEFS-covered
+rows, AMAX days from the full record).** Point, median NSE vs the
+obs-trained reference (obs_full = ar_gefs_ens), paired:
+
+| lead | obs_full | obs_2000 (control) | fc_2000 | fcs_2000 | mixed | mixeds |
+|---|---|---|---|---|---|---|
+| 1 | 0.822 | 0.814 (−0.003) | 0.818 (−0.003) | 0.815 | **0.823 (+0.003, 62%)** | 0.819 |
+| 2 | 0.600 | 0.590 (−0.006) | 0.628 (+0.014) | 0.629 | 0.634 (+0.026, 86%) | **0.645 (+0.029)** |
+| 3 | 0.532 | 0.523 (−0.007) | 0.551 (+0.001) | 0.549 | **0.558 (+0.018, 74%)** | 0.563 |
+
+Peak-day bias: L2 −57.5 → −49.1 (mixeds), L3 −64.6 → −56.5 — training
+on forecast rain teaches the tree to discount a dry, noisy forecast, and
+the gain grows with lead exactly where the rain error is largest.
+fc_2000 beats its data-size twin obs_2000 by +0.004/+0.038/+0.028, so
+the forecast-rain effect is real and outweighs losing 29 training years
+at leads 2–3; the mixed regime (observed <2000, forecast ≥2000) keeps
+both. **Spread features add nothing for points** (fcs ≈ fc, mixeds ≈
+mixed within ±0.01) — trees don't turn member spread into skill.
+
+Lead-1 ladder (obs-trained reference on the same rows: ens-driven q99
+AMAX 69.8% @ width 0.228; memmax-driven 80.1% @ 0.307):
+
+| trained on | driven by | AMAX q99 | pooled q95 / q99 | width q99−q50 |
+|---|---|---|---|---|
+| fc_2000 | ens | 76.2% | 0.945 / 0.985 | 0.405 |
+| fcs_2000 | ens | 76.6% | 0.944 / 0.984 | 0.400 |
+| **mixeds** | **ens** | **81.9%** | 0.951 / 0.989 | **0.427** |
+| mixeds | memmax | 88.9% | 0.967 / 0.993 | 0.567 |
+
+**Verdict:** the forecast-trained tree ladder DOES learn to price rain
+error — ens-driven peak coverage 69.8 → 81.9%, pooled q95/q99 back to
+nominal — but it does it bluntly: width 0.228 → 0.427 (+87%), i.e. it
+widens everywhere, and ends up wider than the scenario ladder that
+reaches 80.1% at 0.307. **Contrast with Arc's LSTM fine-tune, which
+re-calibrates at ZERO width cost (73.0 → 78.4% at 0.273):** the LSTM
+learns *conditional* widening from the rain sequence, the tree only a
+global one. Two model classes, same data, opposite width behaviour — the
+LSTM is the right host for the calibrated ladder; the tree's role is the
+cheap scenario dial. Spread features: nothing for the ladder either.
+Outputs: forecast_fctrain_<v>_L{1,2,3}.parquet (all 15 committed),
+forecast_fq_<v>_<q>_L1.parquet (mixeds committed; fc_2000/fcs_2000 kept
+on disk only, 240 MB, regenerable from results/models/).
+
+**ARC PASS-OFF (7h), in Arc's own recommended order:** (a) memmax rain
+through the fine-tuned lead-1 ladder checkpoint `lstm_ft_ens_q_L1`
+(inference-only: copy dir, rerun with --fcrain memmax parquet, --epochs
+4 so it resumes at the end) — 7d tail + 7g calibration together; the
+tree's analogue went 81.9 → 88.9% at +33% width. (b) fine-tune the L2/L3
+quantile ladders: `--lead L --autoreg --head quantile --fcrain ens
+--fcrain-train --init-from lstm_fc_perfect_q_L{L} --lr 2e-4 --epochs 4
+--out lstm_ft_ens_q_L{L}` — frozen coverage there is 39%/26%, the
+largest expected gain in the project. (c) 20-epoch ceilings (the L1
+control's tail went positive at epoch 20: 16 was short). Skip the s_fc
+channel unless (b) leaves a gap: the tree says spread carries nothing.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
