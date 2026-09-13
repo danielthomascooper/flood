@@ -1,0 +1,11 @@
+device: xpu
+loading 416 basins...
+windows: 5,428,403 train / 454,550 val / 1,819,212 test
+weights initialised from c:\Users\DanielCooper\flood\experiments\results\lstm_fc_perfect_q_L2\lstm_checkpoint.pt (fresh optimizer, lr 0.0002)
+epoch 0: loss 0.0382  val NSE(norm) +0.855  330s
+epoch 1: loss 0.0377  val NSE(norm) +0.861  313s
+epoch 2: loss 0.0379  val NSE(norm) +0.861  314s
+epoch 3: loss 0.0373  val NSE(norm) +0.852  311s
+test inference...
+wrote c:\Users\DanielCooper\flood\experiments\results\lstm_ft_perfect_q_L2\lstm_test_predictions.parquet (1,819,212 rows)
+score it back on the main machine with experiments/evaluate.py

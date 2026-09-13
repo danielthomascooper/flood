@@ -953,6 +953,33 @@ largest expected gain in the project. (c) 20-epoch ceilings (the L1
 control's tail went positive at epoch 20: 16 was short). Skip the s_fc
 channel unless (b) leaves a gap: the tree says spread carries nothing.
 
+**ARC BOX STATUS — 7h COMPLETE (2026-09-13).** All of (a)/(b)/(c) plus a
+3-run epoch/forecast-rain decomposition (20-ep obs-only ladder
+checkpoints driven with ens rain, lstm_ft20_ens_q_L{1,2,3}). (a) **The
+stack is nearly additive: memmax rain through the fine-tuned lead-1
+ladder = AMAX q99 86.4% @ width 0.314** (+3.9 pp over 7d at the SAME
+width; perfect-rain bound 87.7%; tree analogue paid +33% width) - and
+through the calibrated ladder the memmax q50 becomes usable (+0.838,
+AMAX-day bias +0.9%, first near-zero peak bias). **New operational L1
+composite: q50 from ft_ens_q (+0.873), q90+ from ft_memmax_q (86.4%).**
+(b) Ladder fine-tunes: 73.0->78.4 / 39.0->51.2 / 26.0->42.8% at width
+-1/+10/+23% - the ladder widens itself exactly as the rain error it
+sees grows; q99/peak re-centers 0.84->1.02 (L2), 0.68->0.92 (L3).
+(c)+decomposition: 20-ep quantile ceilings 90.8/88.8/88.2% (16-ep was
+undertrained, adopt 20 ep); epoch-matched baselines under ens rain are
+75.3/36.1/25.5%, so **forecast-rain exposure contributes
++3.1/+15.1/+17.3 pp while epochs alone give +2.3/-2.9/-0.5 - extra obs
+epochs sharpen the ladder, which HURTS under compounding rain error;
+at leads 2-3 the entire repair is the mixed regime.** Next by expected
+value: (i) memmax through the fine-tuned L2/L3 ladder checkpoints
+(inference-only, 30 min - frozen+memmax still holds raw L2/L3 coverage
+66.4/60.8% at heavy width; the ft versions should beat both sides);
+(ii) more mixed-regime epochs / higher lr at L2-3 (4 ep at 21.6%
+coverage under-prices 2-3 days of error); (iii) TIGGE member-q98 as
+the memmax driver once the drip fills. Runs lstm_ft_memmax_q_L1,
+lstm_ft_ens_q_L{2,3}, lstm_ft_perfect_q_L{1,2,3},
+lstm_ft20_ens_q_L{1,2,3}; cards/calibration CSVs per run.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at

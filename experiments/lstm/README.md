@@ -923,3 +923,57 @@ rain through the fine-tuned ladder checkpoint (combine 7d's tail with
 7g's calibration), the same fine-tune for the lead-2/3 ladders (where
 frozen coverage fell to 39/26%), and the s_fc spread channel now that
 training-years spread exists.
+
+**Phase 7h — fine-tuned ladders at every lead + the epoch/forecast-rain
+decomposition (2026-09-13).** Twelve runs: (a) member-max rain through
+the fine-tuned lead-1 ladder checkpoint (inference-only), (b) the
+Taccari fine-tune for the lead-2/3 ladders, (c) obs-rain quantile
+controls = 20-epoch ladder ceilings, plus three decomposition runs
+(the 20-epoch obs-only checkpoints driven with ens rain,
+`lstm_ft20_ens_q_L{1,2,3}`). Cards/calibration CSVs alongside each run.
+
+The lead-1 ladder, all mechanisms (AMAX q99 cov @ 90% width mm/day):
+
+| lead-1 ladder | AMAX q99 | width | q50 point |
+|---|---|---|---|
+| frozen + ens (7c) | 73.0% | 0.275 | +0.859 |
+| 20-ep obs + ens (decomp) | 75.3% | 0.262 | +0.867 |
+| fine-tuned + ens (7g) | 78.4% | 0.273 | +0.873 |
+| frozen + memmax (7d) | 82.5% | 0.311 | unusable |
+| **fine-tuned + memmax (7h)** | **86.4%** | **0.314** | +0.838, AMAX bias +0.9% |
+| perfect rain (16 ep) | 87.7% | 0.278 | +0.895 |
+| perfect rain (20 ep) | 90.8% | 0.265 | +0.911 |
+
+Ladder fine-tunes at leads 2-3 (vs frozen):
+
+| lead | frozen + ens | fine-tuned + ens | 20-ep obs + ens (decomp) | frozen + memmax |
+|---|---|---|---|---|
+| 1 | 73.0% @ 0.275 | 78.4% @ 0.273 | 75.3% @ 0.262 | 82.5% @ 0.311 |
+| 2 | 39.0% @ 0.332 | 51.2% @ 0.366 | 36.1% @ 0.315 | 66.4% @ 0.455 |
+| 3 | 26.0% @ 0.354 | 42.8% @ 0.436 | 25.5% @ 0.347 | 60.8% @ 0.581 |
+
+Readings. (1) **The stack is nearly additive at lead 1: member-max rain
+through the fine-tuned ladder reaches 86.4% at width 0.314** - +3.9 pp
+over the 7d scenario config at the same width, 1.3 pp under the
+16-epoch perfect-rain bound, and far more width-efficient than the
+tree's analogue (88.9% at +33% width). Through the calibrated ladder
+the memmax q50 becomes usable (+0.838, AMAX-day bias +0.9% - the first
+near-zero peak-day bias in the project). **New operational lead-1
+composite: q50 from ft_ens_q (+0.873), q90+ from ft_memmax_q (86.4%).**
+(2) The ladder fine-tune lift grows with lead (+5.4/+12.2/+16.8 pp) and
+the ladder learns to widen exactly as the rain error it sees grows
+(width -1%/+10%/+23%); the q99/peak median re-centers from 0.84/0.68 to
+1.02/0.92 at L2/L3. Four epochs at 21.6% forecast coverage do not fully
+re-price 2-3 days of compounding error - the frozen+memmax scenario
+still holds raw L2/L3 coverage (66.4/60.8%) at much higher width and a
+dead q50; memmax through the fine-tuned L2/L3 checkpoints is the
+obvious next inference-only pass. (3) The decomposition is
+decisive: against epoch-matched baselines the forecast-rain
+contribution is +3.1/+15.1/+17.3 pp across leads while epochs alone
+give +2.3/-2.9/-0.5 pp - extra obs epochs SHARPEN the ladder, which
+helps under near-truth rain (L1) and actively hurts once rain error
+compounds (L2: 36.1% vs frozen 39.0%). At leads 2-3 the entire ladder
+repair is the mixed regime. (4) The 20-epoch
+quantile ceilings land at 90.8/88.8/88.2% (16-ep: 87.7/90.7/87.3) with
+q50 +0.911/+0.883/+0.877 - the 16-epoch budget under-trained the
+lead-1 ladder most; adopt 20 epochs for future ceiling training.
