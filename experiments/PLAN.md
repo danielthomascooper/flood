@@ -980,6 +980,32 @@ the memmax driver once the drip fills. Runs lstm_ft_memmax_q_L1,
 lstm_ft_ens_q_L{2,3}, lstm_ft_perfect_q_L{1,2,3},
 lstm_ft20_ens_q_L{1,2,3}; cards/calibration CSVs per run.
 
+**CPU cross-check of 7h + the fine-tuned composite as one object
+(2026-09-14, GEFS-covered rows, 4,691 AMAX events from the full record):**
+
+| ladder | q50 pooled | q95 / q99 pooled | AMAX q99 | 90% width | 90% cov |
+|---|---|---|---|---|---|
+| frozen ens (7c) | 0.288 | 0.927 / 0.971 | 72.1% | 0.276 | 0.908 |
+| frozen memmax (7d) | 0.378 | 0.952 / 0.983 | 82.2% | 0.315 | 0.917 |
+| fine-tuned ens (7g) | 0.568 | 0.948 / 0.983 | 77.5% | 0.275 | 0.887 |
+| fine-tuned memmax (7h) | 0.652 | 0.968 / 0.991 | 86.0% | 0.318 | 0.880 |
+| **composite: ft-ens q05–q75 + ft-memmax q95/q99** | 0.568 | 0.968 / 0.991 | **86.0%** | 0.323 | 0.907 |
+
+Arc's 86.4 / 78.4% replicate (86.0 / 77.5 on this event set). Composite
+never crosses (memmax q95 < ens q75 in 0.00% of rows). Two things the
+fine-tune fixed that 7c had flagged: the ens ladder's LOWER half is
+repaired too (q50 pooled 0.288 → 0.568, so the composite's 90% band is
+honest at 0.907 / width 0.323 — the frozen composite over-covered
+because its lower half was collapsed), and q50-as-point +0.871 (Arc
++0.873). NOT reproduced: Arc's "memmax q50 AMAX-day bias +0.9%" — on
+full-record AMAX days restricted to covered rows the memmax q50 sits at
+−16.4% (ens q50 −25.3%); likely a different event/statistic definition
+(timing-blind year-max?) — treat +0.9% as unverified until the
+definition is pinned. Lead 1 is now fully settled at 86% peak coverage
+with a calibrated median; the open front is leads 2–3 (Arc's (i)/(ii))
+and TIGGE q98 as the driver when the drip fills (~4.5 days at the
+current ~4.6 min/day-request).
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
