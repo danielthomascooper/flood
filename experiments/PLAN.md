@@ -1023,6 +1023,19 @@ the tail driver when the drip fills (~4.5 days), and the L2-3 width
 cost - the stack is honest but broad at L3 (0.789); a spread-aware
 tail (s_fc channel) could narrow it if (ii) does not.
 
+**CPU cross-check of 7h-i (2026-09-15, full-record AMAX days on covered
+rows):** ft+memmax AMAX q99 76.4% / 71.6% at L2/L3 (Arc 77.3 / 72.8 —
+within event-set noise), pooled q95/q99 0.964/0.992 and 0.968/0.992;
+composite (ft-ens q05–q75 + ft-memmax q95/q99) crosses in 0.01% of rows
+— negligible, sort if it matters. Two things worth stating plainly for
+the write-up: (1) at leads 2–3 the fine-tuned ens ladder ALONE
+(48.9 / 39.9%) is still well below frozen+memmax (64.9 / 59.3%) — the
+fine-tune is necessary but not sufficient beyond lead 1; only the stack
+wins. (2) The composite's 90% band at L3 is 0.896 mm/day wide (L1
+0.323) — honest, but a 3-day flood bound that broad is close to
+climatology for small catchments; Arc's (ii)/(iii) and a spread-aware
+tail are the levers.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
