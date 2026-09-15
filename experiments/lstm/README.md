@@ -940,7 +940,7 @@ The lead-1 ladder, all mechanisms (AMAX q99 cov @ 90% width mm/day):
 | 20-ep obs + ens (decomp) | 75.3% | 0.262 | +0.867 |
 | fine-tuned + ens (7g) | 78.4% | 0.273 | +0.873 |
 | frozen + memmax (7d) | 82.5% | 0.311 | unusable |
-| **fine-tuned + memmax (7h)** | **86.4%** | **0.314** | +0.838, AMAX bias +0.9% |
+| **fine-tuned + memmax (7h)** | **86.4%** | **0.314** | +0.838, year-max bias +0.9% |
 | perfect rain (16 ep) | 87.7% | 0.278 | +0.895 |
 | perfect rain (20 ep) | 90.8% | 0.265 | +0.911 |
 
@@ -957,8 +957,10 @@ through the fine-tuned ladder reaches 86.4% at width 0.314** - +3.9 pp
 over the 7d scenario config at the same width, 1.3 pp under the
 16-epoch perfect-rain bound, and far more width-efficient than the
 tree's analogue (88.9% at +33% width). Through the calibrated ladder
-the memmax q50 becomes usable (+0.838, AMAX-day bias +0.9% - the first
-near-zero peak-day bias in the project). **New operational lead-1
+the memmax q50 becomes usable (+0.838; its TIMING-BLIND year-max bias
+is +0.9% - the annual-max magnitude is unbiased - but on the observed
+peak day it still sits -16.4% low; the CPU cross-check flag is
+resolved, both numbers are real and the 7h claim was mislabeled). **New operational lead-1
 composite: q50 from ft_ens_q (+0.873), q90+ from ft_memmax_q (86.4%).**
 (2) The ladder fine-tune lift grows with lead (+5.4/+12.2/+16.8 pp) and
 the ladder learns to widen exactly as the rain error it sees grows
@@ -977,3 +979,24 @@ repair is the mixed regime. (4) The 20-epoch
 quantile ceilings land at 90.8/88.8/88.2% (16-ep: 87.7/90.7/87.3) with
 q50 +0.911/+0.883/+0.877 - the 16-epoch budget under-trained the
 lead-1 ladder most; adopt 20 epochs for future ceiling training.
+
+**Phase 7h-i — the stacked ladder at every lead (2026-09-15).** The CPU
+cross-check endorsed memmax through the fine-tuned L2/L3 checkpoints;
+both inference runs done (`lstm_ft_memmax_q_L{2,3}`). The full grid
+(AMAX q99 cov @ 90% width; ft+memmax q50 in the last column):
+
+| lead | frozen+ens | ft+ens | frozen+memmax | **ft+memmax** | ft+mm q50 |
+|---|---|---|---|---|---|
+| 1 | 73.0 @ 0.275 | 78.4 @ 0.273 | 82.5 @ 0.311 | **86.4 @ 0.314** | +0.838 |
+| 2 | 39.0 @ 0.332 | 51.2 @ 0.366 | 66.4 @ 0.455 | **77.3 @ 0.536** | +0.523 |
+| 3 | 26.0 @ 0.354 | 42.8 @ 0.436 | 60.8 @ 0.581 | **72.8 @ 0.789** | +0.350 |
+
+The two mechanisms stack at every lead: learned calibration (the
+fine-tune) plus the wet scenario (member-max) beat either alone on
+coverage everywhere - +3.9/+10.9/+12.0 pp over frozen+memmax at
++1/+18/+36% width. The operational composite per lead: q50 from ft_ens
+(+0.873/+0.663/+0.603), q90+ from ft_memmax (86.4/77.3/72.8%). The
+width the stack pays grows with lead - at L3 the 90% band is 0.789
+mm/day, wide but honest (year-max bias +6.7%). Note per the CPU
+cross-check: quoted "year-max bias" is timing-blind (annual-max
+magnitude); peak-DAY bias for ft_memmax q50 remains ~-16% at L1.

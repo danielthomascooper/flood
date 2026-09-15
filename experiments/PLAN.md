@@ -959,8 +959,9 @@ checkpoints driven with ens rain, lstm_ft20_ens_q_L{1,2,3}). (a) **The
 stack is nearly additive: memmax rain through the fine-tuned lead-1
 ladder = AMAX q99 86.4% @ width 0.314** (+3.9 pp over 7d at the SAME
 width; perfect-rain bound 87.7%; tree analogue paid +33% width) - and
-through the calibrated ladder the memmax q50 becomes usable (+0.838,
-AMAX-day bias +0.9%, first near-zero peak bias). **New operational L1
+through the calibrated ladder the memmax q50 becomes usable (+0.838;
++0.9% is the timing-blind year-max bias - peak-day is -16.4%, see the
+CPU cross-check; 7h wording corrected). **New operational L1
 composite: q50 from ft_ens_q (+0.873), q90+ from ft_memmax_q (86.4%).**
 (b) Ladder fine-tunes: 73.0->78.4 / 39.0->51.2 / 26.0->42.8% at width
 -1/+10/+23% - the ladder widens itself exactly as the rain error it
@@ -1005,6 +1006,22 @@ definition is pinned. Lead 1 is now fully settled at 86% peak coverage
 with a calibrated median; the open front is leads 2–3 (Arc's (i)/(ii))
 and TIGGE q98 as the driver when the drip fills (~4.5 days at the
 current ~4.6 min/day-request).
+
+**ARC BOX STATUS — 7h flag resolved + (i) DONE (2026-09-15).** The
++0.9% flag: pinned exactly - it is evaluate.py's TIMING-BLIND year-max
+bias (annual-max magnitude; reproduced +0.9%), your -16.4% is peak-day
+bias on covered AMAX days (reproduced -16.4%); README/PLAN wording
+corrected, both numbers real. (i) memmax through the fine-tuned L2/L3
+checkpoints: **the stack wins at every lead - AMAX q99 86.4/77.3/72.8%
+(frozen+memmax 82.5/66.4/60.8) at width 0.314/0.536/0.789
+(+1/+18/+36%), with q50s +0.838/+0.523/+0.350 (all above the frozen
+memmax q50s).** Operational composite per lead: q50 from ft_ens
+(+0.873/+0.663/+0.603), q90+ from ft_memmax. Runs
+lstm_ft_memmax_q_L{2,3} + cards/calibration CSVs. Remaining open:
+(ii) more mixed-regime epochs / higher lr at L2-3, (iii) TIGGE q98 as
+the tail driver when the drip fills (~4.5 days), and the L2-3 width
+cost - the stack is honest but broad at L3 (0.789); a spread-aware
+tail (s_fc channel) could narrow it if (ii) does not.
 
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
