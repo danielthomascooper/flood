@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily ECMWF open-data archive (00Z ENS is complete by ~08:00 UTC; retry mid-afternoon)
+
+[Timer]
+OnCalendar=*-*-* 09:30:00
+OnCalendar=*-*-* 15:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

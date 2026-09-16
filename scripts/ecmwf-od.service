@@ -1,0 +1,9 @@
+[Unit]
+Description=Archive ECMWF open-data ENS precipitation (GB box) for yesterday and today
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/habrt/source/flood
+ExecStart=/home/habrt/source/flood/.venv/bin/python -u experiments/nwp/fetch_ecmwf_opendata.py
+StandardOutput=append:/home/habrt/source/flood/cache/nwp/ecmwf_od/pull.log
+StandardError=append:/home/habrt/source/flood/cache/nwp/ecmwf_od/pull.err

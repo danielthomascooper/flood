@@ -43,6 +43,10 @@ MEMMAX = ROOT / "cache/nwp/gefs_catchment_leads_memmax.parquet"
 MODE = sys.argv[1] if len(sys.argv) > 1 else "score"
 FC_START = "2000-01-01"
 VARIANTS = ["obs_2000", "fc_2000", "fcs_2000", "mixed", "mixeds"]
+# ungauged forecasting (mixed regime): no own-flow columns; donors = the 3
+# nearest gauged neighbours' same-day / lag-1 flows (ung), or no donors at
+# all (ungnd) = the weather + forecast-rain floor.
+UNG_VARIANTS = ["ung_mixed", "ungnd_mixed"]
 ALPHAS = {"q50": 0.50, "q90": 0.90, "q95": 0.95, "q99": 0.99}
 BASE = dict(max_iter=400, learning_rate=0.08, max_leaf_nodes=63,
             min_samples_leaf=100, l2_regularization=1.0,
@@ -86,12 +90,15 @@ def build(L):
     return DATA, GID
 
 
-def columns(DATA, L, spread):
+def columns(DATA, L, spread, variant=""):
     own = ["y_now"] + [f"y_lag{l}" for l in range(1, 7)] + ["y_mean30", "y_mean90"]
     don = [f"nb{r}_{l}" for r in range(3) for l in ("d0", "d1")]
     aux = [c for c in DATA.columns if c.startswith(("fc_next", "s_next", "mx_next", "p_next"))] + ["target"]
     weather = [c for c in DATA.columns if c not in own + don + aux]
-    cols = weather + own + don + [f"p_next{k}" for k in range(1, L + 1)]
+    use_own = not variant.startswith("ung")
+    use_don = not variant.startswith("ungnd")
+    cols = weather + (own if use_own else []) + (don if use_don else []) \
+        + [f"p_next{k}" for k in range(1, L + 1)]
     if spread:
         cols += [f"s_next{k}" for k in range(1, L + 1)]
     return cols
@@ -108,7 +115,7 @@ def train_frame(DATA, variant, L):
         mask = pre & since2000 & has_fc
     else:                                          # mixed
         mask = pre & (~since2000 | has_fc)
-    X = DATA.loc[mask, columns(DATA, L, variant in ("fcs_2000", "mixeds"))].copy()
+    X = DATA.loc[mask, columns(DATA, L, variant in ("fcs_2000", "mixeds"), variant)].copy()
     if variant != "obs_2000":                      # forecast rain where the archive has it
         sub = DATA.loc[mask]
         for k in range(1, L + 1):
@@ -117,18 +124,18 @@ def train_frame(DATA, variant, L):
     return mask, X
 
 
-def test_frame(DATA, L, spread, rain="fc"):
+def test_frame(DATA, L, spread, rain="fc", variant=""):
     ok = DATA["target"].notna().values & DATA["y_now"].notna().values
     is_te = np.asarray(DATA.index >= TEST_START) & ok
-    X = DATA.loc[is_te, columns(DATA, L, spread)].copy()
+    X = DATA.loc[is_te, columns(DATA, L, spread, variant)].copy()
     for k in range(1, L + 1):
         X[f"p_next{k}"] = DATA.loc[is_te, f"{rain}_next{k}"].values
     return is_te, X
 
 
-def run_point(L):
+def run_point(L, variants=VARIANTS):
     DATA, GID = build(L)
-    for v in VARIANTS:
+    for v in variants:
         dst = OUT / f"forecast_fctrain_{v}_L{L}.parquet"
         if dst.exists():
             print(f"{v} L{L}: exists, skipping"); continue
@@ -137,7 +144,7 @@ def run_point(L):
         t0 = time.time()
         m = HistGradientBoostingRegressor(**BASE).fit(Xtr, DATA.loc[mask, "target"].values)
         print(f"{v} L{L}: {mask.sum():,} train rows, fitted in {time.time()-t0:.0f}s", flush=True)
-        is_te, Xte = test_frame(DATA, L, spread)
+        is_te, Xte = test_frame(DATA, L, spread, variant=v)
         idx = pd.DatetimeIndex(DATA.index[is_te], name="date") + pd.Timedelta(days=L)
         pd.DataFrame({"gid": GID[is_te], "obs": DATA.loc[is_te, "target"].values,
                       "pred": np.clip(m.predict(Xte), 0, None).astype("float32"),
@@ -164,12 +171,12 @@ def run_quantile(variant, q):
             .fit(Xtr, DATA.loc[mask, "target"].values)
         joblib.dump(m, mpath)
         print(f"{variant} {q}: {mask.sum():,} train rows, fitted in {time.time()-t0:.0f}s", flush=True)
-    is_te, Xte = test_frame(DATA, 1, spread, rain="fc")
+    is_te, Xte = test_frame(DATA, 1, spread, rain="fc", variant=variant)
     idx = pd.DatetimeIndex(DATA.index[is_te], name="date") + pd.Timedelta(days=1)
     out = pd.DataFrame({"gid": GID[is_te], "obs": DATA.loc[is_te, "target"].values,
                         "covered": DATA.loc[is_te, "fc_next1"].notna().values}, index=idx)
     out["pred_ens"] = np.clip(m.predict(Xte), 0, None).astype("float32")
-    _, Xmx = test_frame(DATA, 1, spread, rain="mx")
+    _, Xmx = test_frame(DATA, 1, spread, rain="mx", variant=variant)
     out["pred_memmax"] = np.clip(m.predict(Xmx), 0, None).astype("float32")
     out.to_parquet(dst)
     print(f"{variant} {q}: wrote {dst.name}", flush=True)
@@ -186,6 +193,8 @@ def amax_positions(base, cov):
 
 if MODE.startswith("L"):
     run_point(int(MODE[1])); sys.exit(0)
+if MODE.startswith("U"):                       # ungauged variants only
+    run_point(int(MODE[1]), UNG_VARIANTS); sys.exit(0)
 if MODE.startswith("Q"):
     v, q = MODE[1:].rsplit("_", 1); run_quantile(v, q); sys.exit(0)
 
@@ -196,7 +205,7 @@ if MODE == "score":
         cov = ref.covered.values
         am = amax_positions(ref, cov)
         base_nse = per_catchment(ref[cov]).nse
-        for v in ["obs_full"] + VARIANTS:
+        for v in ["obs_full"] + VARIANTS + UNG_VARIANTS:
             p = OUT / (f"forecast_ar_gefs_ens_L{L}.parquet" if v == "obs_full"
                        else f"forecast_fctrain_{v}_L{L}.parquet")
             if not p.exists():
@@ -214,7 +223,7 @@ if MODE == "score":
 
 if MODE == "scoreq":
     rows = []
-    for v in VARIANTS:
+    for v in VARIANTS + UNG_VARIANTS:
         Q = {}
         for q in ALPHAS:
             p = OUT / f"forecast_fq_{v}_{q}_L1.parquet"
