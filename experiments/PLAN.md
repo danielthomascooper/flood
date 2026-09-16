@@ -1057,13 +1057,14 @@ untested; if the product moves to ECMWF, start archiving it now.
 
 **FINISHING QUEUE for publication (agreed 2026-09-16), then pivot to
 the practical level forecast:**
-- *Arc 7i:* (a) memmax through the fine-tuned L2/L3 ladder checkpoints
-  (inference-only); (b) more mixed-regime epochs / higher lr at L2–3
-  (e.g. 8 ep at 5e-4) — pick by test cards; (c) 20-epoch point ceilings
-  for L1–3 so point and ladder baselines match; (d) **seeds 1 and 2 of
-  the headline pair** — 20-ep quantile ceiling L1 → fine-tune → memmax
-  inference — so the 86% / +0.873 headline is a 3-seed number (Phase 5
-  precedent: seed 0 was the outlier once).
+- *Arc 7i:* (a) ~~memmax through the fine-tuned L2/L3 ladders~~ DONE
+  in 7h-i (stack 86.4/77.3/72.8%); (b) more mixed-regime epochs /
+  higher lr at L2–3 (e.g. 8 ep at 5e-4) — pick by test cards; the L3
+  band is 0.896 wide, so this is also the width lever; (c) 20-epoch
+  point ceilings for L1–3 so point and ladder baselines match; (d)
+  **seeds 1 and 2 of the headline pair** — 20-ep quantile ceiling L1 →
+  fine-tune → memmax inference — so the 86% / +0.873 headline is a
+  3-seed number (Phase 5 precedent: seed 0 was the outlier once).
 - *CPU:* TIGGE drip (1,131 days left at ~5–12 min each → ~1 week),
   then tigge_catchment.py rebuild, tree rescore (predict-only), and
   member-q98 through the fine-tuned ladders on Arc (inference).
