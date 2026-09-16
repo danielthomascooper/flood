@@ -1036,6 +1036,45 @@ wins. (2) The composite's 90% band at L3 is 0.896 mm/day wide (L1
 climatology for small catchments; Arc's (ii)/(iii) and a spread-aware
 tail are the levers.
 
+**Operational-transfer test (CPU, 2026-09-16,
+`analysis_operational_transfer.py` → operational_transfer.csv).** The
+fine-tune learned from the GEFS v12 *reforecast*; does its gain survive
+the real-time feed? Test archive split: reforecast years 2010-10→2019-12
+(3,869 AMAX events) vs operational GEFS 2020-09→2022-09 (820 events;
+same model version, so this tests initial-condition/ensemble source,
+not NWP upgrades). **LSTM: transfers completely.** Lead-1 ladders, AMAX
+q99 reforecast → operational: frozen ens 72.0 → 72.2%, ft ens 77.3 →
+78.5%, frozen memmax 81.9 → 83.3%, **ft memmax 86.0 → 86.0%** at width
+0.325 → 0.291; pooled q99 ≥0.98 in both. Points, fine-tuned minus
+frozen: +0.007/+0.019/+0.017 (reforecast) vs +0.008/+0.019/+0.015
+(operational), fine-tuned better on 79–87% of catchments in the live
+period. Tree mixeds: L1/L2 gains hold (+0.004/+0.029 → 0.000/+0.025),
+the L3 gain does not (+0.013 → −0.002, 49% better) — the tree's
+forecast-rain benefit at the longest lead is reforecast-specific or
+simply noisy on two years. Write-up caveat to keep: an operational feed
+with model upgrades (GEFS v13, or a switch to ECMWF open data) is
+untested; if the product moves to ECMWF, start archiving it now.
+
+**FINISHING QUEUE for publication (agreed 2026-09-16), then pivot to
+the practical level forecast:**
+- *Arc 7i:* (a) memmax through the fine-tuned L2/L3 ladder checkpoints
+  (inference-only); (b) more mixed-regime epochs / higher lr at L2–3
+  (e.g. 8 ep at 5e-4) — pick by test cards; (c) 20-epoch point ceilings
+  for L1–3 so point and ladder baselines match; (d) **seeds 1 and 2 of
+  the headline pair** — 20-ep quantile ceiling L1 → fine-tune → memmax
+  inference — so the 86% / +0.873 headline is a 3-seed number (Phase 5
+  precedent: seed 0 was the outlier once).
+- *CPU:* TIGGE drip (1,131 days left at ~5–12 min each → ~1 week),
+  then tigge_catchment.py rebuild, tree rescore (predict-only), and
+  member-q98 through the fine-tuned ladders on Arc (inference).
+- *Optional, one extra experiment:* ungauged forecasting (donors +
+  forecast rain, no own flow) — never run; matters for the level-forecast
+  pivot. Decide before writing.
+- *Write-up:* "Where the Floods Went" Phases 6–7 sections, ledger,
+  surviving-claims list, operational-composite recipe, limitations
+  (daily blind spot ~10% of AMAX, fixed-model archive, single NWP
+  system at leads 2–3).
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
