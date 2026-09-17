@@ -1110,6 +1110,43 @@ idle. Next Arc work arrives with the CPU TIGGE drip: member-q98/max
 through the fine-tuned ladders (inference-only, cheap). Val curves in
 the commit message.
 
+**Ungauged forecasting (CPU, chain finished 2026-09-16, scored
+2026-09-17; `hgb_forecast_fctrain.py U{1,2,3}` + `Qung_mixed_*`, cards in
+forecast_fctrain_cards.csv / forecast_fctrain_ladder_L1.csv).** The
+finishing queue's optional experiment, run because it decides what the
+level-forecast pivot can promise at sites without live telemetry. Mixed
+regime (observed rain <2000, GEFS ≥2000), driven with ens-mean rain:
+ung_mixed = no own-flow features, 3 nearest gauges' same-day/lag-1 flow;
+ungnd_mixed = no donors either (weather + forecast rain only).
+
+| lead | gauged mixed | ung_mixed (donors) | ungnd_mixed | own-flow penalty | donors worth |
+|---|---|---|---|---|---|
+| 1 | 0.823 | 0.764 | 0.753 | −0.059 | +0.011 |
+| 2 | 0.634 | 0.586 | 0.575 | −0.048 | +0.011 |
+| 3 | 0.558 | 0.531 | 0.525 | −0.027 | +0.006 |
+
+Peak-day bias barely moves (−32/−56/−63 vs −30/−56/−62). **The value of
+a site's own flow decays with lead** (0.059 → 0.048 → 0.027) because by
+day 2–3 the forecast is rain knowledge, not state — at lead 3 a site with
+no telemetry forecasts as well as the obs-trained gauged reference
+(0.531 vs 0.532). Donors are worth ~+0.01 at every lead, far less than
+their +0.1 in nowcasting: their information is same-day, and a forecast
+has already moved past it (Phase 6 found the same for gauged sites).
+Lead-1 ladder: ens-driven AMAX q99 76.1% @ width 0.736 (gauged mixeds
+81.9% @ 0.427; pooled q99 0.979 vs 0.989), memmax-driven 84.6% @ 0.908
+— without own flow the ladder keeps most of its peak coverage but pays
++72% width: own flow is what makes the envelope SHARP, not what makes
+it cover. **Caveats, both material:** (1) this is an own-flow ablation
+on the temporal split — each catchment's flow record is still in
+training — so it prices "no live telemetry", NOT a true spatial
+holdout; Phase 5's fair ungauged penalty was ~1.6× the naive one and
+the same inflation should be assumed here until a grouped-CV run says
+otherwise. (2) Donors are nearest-gauge, not the Phase 3
+geology-similar filter, so chalk sites are probably under-served.
+For the pivot: a level forecast at an un-telemetered site is viable at
+leads 2–3 at near-gauged point skill, but its lead-1 envelope will be
+~70% wider.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at

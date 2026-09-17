@@ -1,0 +1,36 @@
+=== ungauged chain start Wed Sep 16 10:21:00 PM BST 2026
+building forecast frames...
+  7,901,088 rows in 23s
+ung_mixed L1: 6,015,656 train rows, fitted in 263s
+ung_mixed L1: wrote forecast_fctrain_ung_mixed_L1.parquet
+ungnd_mixed L1: 6,015,656 train rows, fitted in 247s
+ungnd_mixed L1: wrote forecast_fctrain_ungnd_mixed_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+ung_mixed L2: 6,014,907 train rows, fitted in 282s
+ung_mixed L2: wrote forecast_fctrain_ung_mixed_L2.parquet
+ungnd_mixed L2: 6,014,907 train rows, fitted in 250s
+ungnd_mixed L2: wrote forecast_fctrain_ungnd_mixed_L2.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+ung_mixed L3: 6,014,281 train rows, fitted in 276s
+ung_mixed L3: wrote forecast_fctrain_ung_mixed_L3.parquet
+ungnd_mixed L3: 6,014,281 train rows, fitted in 255s
+ungnd_mixed L3: wrote forecast_fctrain_ungnd_mixed_L3.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+ung_mixed q50: 6,015,656 train rows, fitted in 568s
+ung_mixed q50: wrote forecast_fq_ung_mixed_q50_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+ung_mixed q90: 6,015,656 train rows, fitted in 575s
+ung_mixed q90: wrote forecast_fq_ung_mixed_q90_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+ung_mixed q95: 6,015,656 train rows, fitted in 548s
+ung_mixed q95: wrote forecast_fq_ung_mixed_q95_L1.parquet
+building forecast frames...
+  7,901,088 rows in 23s
+ung_mixed q99: 6,015,656 train rows, fitted in 465s
+ung_mixed q99: wrote forecast_fq_ung_mixed_q99_L1.parquet
+=== UNGAUGED CHAIN DONE Wed Sep 16 11:31:22 PM BST 2026
