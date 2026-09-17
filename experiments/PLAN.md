@@ -1075,6 +1075,22 @@ the practical level forecast:**
   surviving-claims list, operational-composite recipe, limitations
   (daily blind spot ~10% of AMAX, fixed-model archive, single NWP
   system at leads 2–3).
+**ARC BOX STATUS — 7i (lever ii) DONE (2026-09-17).** L2/L3 ladders
+re-fine-tuned at 8 ep / 5e-4 + memmax stack rebuilt
+(lstm_ft8_{ens,memmax}_q_L{2,3}). **Depth slides along the
+coverage/width curve, it does not shift it:** ens 51.2->54.7 / 42.8->
+45.3%, stack 77.3->79.0 @ 0.561 / 72.8->73.8 @ 0.851 - all at
+proportional width, q50s flat. The mixed regime saturates by ~8 epochs
+at 21.6% training-window coverage; the residual L2-3 gap to perfect
+(90.7/87.3%) is rain information. Conclusion for the roadmap: stop
+turning the depth/lr dial; the two live levers are (iii) TIGGE
+member-q98/max tails when the drip fills, and extending the reforecast
+pull beyond 2000-2010 to raise the 21.6% coverage. Current bests
+unchanged in kind: composite = ft_ens q50 + ft_memmax tail; use the
+ft8 checkpoints at L2-3 if the +1-2 pp is worth +5-8% width, else ft4.
+Ops: an Arc GPU stall made one inference crawl ~9 h on CPU (results
+deterministic, unaffected); watch for it. Cards
+lstm_ft8_*_{cards,calibration}.csv committed.
 
 ### Phase 6 (2026-08-30): from simulation to forecasting
 

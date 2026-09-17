@@ -1000,3 +1000,28 @@ width the stack pays grows with lead - at L3 the 90% band is 0.789
 mm/day, wide but honest (year-max bias +6.7%). Note per the CPU
 cross-check: quoted "year-max bias" is timing-blind (annual-max
 magnitude); peak-DAY bias for ft_memmax q50 remains ~-16% at L1.
+
+**Phase 7i — the depth lever at leads 2-3 (2026-09-17).** Lever (ii),
+using the 7g pass-off's pre-authorized escalation: the L2/L3 ladders
+re-fine-tuned with 8 epochs at lr 5e-4 (vs 4 at 2e-4), then the
+member-max stack rebuilt on the deeper checkpoints
+(`lstm_ft8_{ens,memmax}_q_L{2,3}`; cards/calibration CSVs alongside).
+
+| config (AMAX q99 @ 90% width) | lead 2 | lead 3 |
+|---|---|---|
+| ft 4 ep + ens | 51.2% @ 0.366 | 42.8% @ 0.436 |
+| ft 8 ep + ens | 54.7% @ 0.381 | 45.3% @ 0.471 |
+| ft 4 ep + memmax (stack) | 77.3% @ 0.536 | 72.8% @ 0.789 |
+| ft 8 ep + memmax (stack) | 79.0% @ 0.561 | 73.8% @ 0.851 |
+
+Verdict: **depth slides along the coverage/width tradeoff curve rather
+than shifting it** - +2.5/+3.5 pp (ens) and +1.0/+1.7 pp (stack) at
+proportional width cost, with q50s flat (+0.664/+0.597 vs
++0.663/+0.603). The mixed-regime lever saturates by ~8 epochs at the
+archive's 21.6% training-window coverage; the residual L2-3 gap to the
+perfect-rain ladders (90.7/87.3%) is rain-forecast information, not
+optimization. Ops note: an Arc GPU stall made the ft8_ens_q_L3
+inference crawl on CPU for ~9 h before completing (results unaffected -
+inference is deterministic). Remaining levers, unchanged: TIGGE
+member-q98/max as the tail driver when the drip fills, and more
+reforecast training years to raise the 21.6% coverage.
