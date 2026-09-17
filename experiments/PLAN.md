@@ -1092,6 +1092,24 @@ Ops: an Arc GPU stall made one inference crawl ~9 h on CPU (results
 deterministic, unaffected); watch for it. Cards
 lstm_ft8_*_{cards,calibration}.csv committed.
 
+**ARC BOX STATUS - 7j (item d) DONE, Arc finishing queue COMPLETE
+(2026-09-17).** Seeds 1 and 2 of the headline chain ran end to end
+(20-ep quantile ceiling -> 4-ep mixed-regime ft at 2e-4 -> memmax
+inference; run dirs lstm_{fc_perfect,ft_ens,ft_memmax}_q_L1_s{1,2},
+cards/calibration CSVs alongside). Every rung replicates (AMAX q99 @
+90% width; q50): ceiling 90.8/90.6/91.6 @ 0.265/0.279/0.282
+(+0.911/+0.900/+0.901); ft+ens 78.4/79.5/77.3 @ 0.273/0.258/0.278
+(+0.873/+0.869/+0.865); ft+memmax stack 86.4/87.2/85.6 @
+0.314/0.300/0.322 (+0.838/+0.836/+0.840). **Quote the headline as a
+3-seed range: stack 85.6-87.2% (mean 86.4%), composite q50
++0.865-0.873; seed spread ~1.6 pp / 0.008 NSE - no Phase-5-style
+seed-0 artefact this time.** The stack q50's near-zero year-max bias
+replicates too (+0.9/+0.1/-1.8%, timing-blind; peak-day stays ~-16%).
+Arc items (a)-(d) of the finishing queue are all done; the Arc box is
+idle. Next Arc work arrives with the CPU TIGGE drip: member-q98/max
+through the fine-tuned ladders (inference-only, cheap). Val curves in
+the commit message.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at

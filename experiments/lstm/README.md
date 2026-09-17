@@ -1025,3 +1025,33 @@ inference crawl on CPU for ~9 h before completing (results unaffected -
 inference is deterministic). Remaining levers, unchanged: TIGGE
 member-q98/max as the tail driver when the drip fills, and more
 reforecast training years to raise the 21.6% coverage.
+
+**Phase 7j — 3-seed replication of the headline pair (2026-09-17).**
+Finishing-queue item (d): seeds 1 and 2 of the full lead-1 ladder
+chain (20-epoch quantile ceiling on perfect rain -> 4-epoch mixed-regime
+fine-tune at 2e-4 -> member-max inference through the fine-tuned
+checkpoint), so the operational-composite headline is quoted as a seed
+range, per the Phase 5 lesson (the donor AMAX-bias edge was a seed-0
+artefact once). It is not this time - every rung replicates:
+
+| run (AMAX q99 cov @ 90% width; q50) | seed 0 | seed 1 | seed 2 |
+|---|---|---|---|
+| 20-ep ceiling | 90.8 @ 0.265; +0.911 | 90.6 @ 0.279; +0.900 | 91.6 @ 0.282; +0.901 |
+| ft + ens (q50 source) | 78.4 @ 0.273; +0.873 | 79.5 @ 0.258; +0.869 | 77.3 @ 0.278; +0.865 |
+| ft + memmax (tail source) | 86.4 @ 0.314; +0.838 | 87.2 @ 0.300; +0.836 | 85.6 @ 0.322; +0.840 |
+
+Quote the headline as a 3-seed range: **stack coverage 85.6-87.2%
+(mean 86.4%) at 90% width 0.30-0.32, composite q50 +0.865-0.873** -
+seed spread ~1.6 pp on coverage and 0.008 NSE on q50, comparable to
+the val-noise floor and far smaller than any config-to-config gap in
+the ladder. The near-zero timing-blind year-max bias of the stack q50
+also replicates (+0.9 / +0.1 / -1.8%); peak-DAY bias stays ~-15 to
+-17% at all seeds - always label which bias is quoted. Ceiling val
+curves peak +0.886/+0.886/+0.895; run dirs
+`lstm_{fc_perfect,ft_ens,ft_memmax}_q_L1_s{1,2}` with cards and
+calibration CSVs alongside. With this, all four Arc items of the
+finishing queue - (a) ft+memmax at L2/L3, (b) the 8-ep/5e-4 depth
+probe, (c) 20-epoch point ceilings, (d) this replication - are
+complete; the Arc box is idle pending the CPU box's TIGGE drip
+(member-q98/max through the ft ladders when it fills).
+
