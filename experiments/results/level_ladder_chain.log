@@ -1,0 +1,17 @@
+=== level ladder start Sat Sep 19 05:22:57 PM BST 2026
+  217 stations, 4,121,481 rows in 14s
+q50: 2,388,928 train rows, fitted in 216s
+q50: wrote level_lq_q50_L1.parquet
+  217 stations, 4,121,481 rows in 14s
+q75: 2,388,928 train rows, fitted in 174s
+q75: wrote level_lq_q75_L1.parquet
+  217 stations, 4,121,481 rows in 14s
+q90: 2,388,928 train rows, fitted in 167s
+q90: wrote level_lq_q90_L1.parquet
+  217 stations, 4,121,481 rows in 14s
+q95: 2,388,928 train rows, fitted in 161s
+q95: wrote level_lq_q95_L1.parquet
+  217 stations, 4,121,481 rows in 14s
+q99: 2,388,928 train rows, fitted in 136s
+q99: wrote level_lq_q99_L1.parquet
+=== LEVEL LADDER DONE Sat Sep 19 05:39:55 PM BST 2026

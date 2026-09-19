@@ -1235,6 +1235,43 @@ fixed false-alarm budget. Then the same target on Arc (LSTM level ladder
 with the mixed-regime fine-tune), which is where Phase 7 says the
 calibrated ladder belongs.
 
+**8b-2 RESULT (2026-09-19, `hgb_level_ladder.py`, lead 1, 217 stations,
+915k GEFS-covered rows; cards level_ladder_cards.csv, reliability
+level_ladder_reliability.csv).** Five quantile trees on z-level (mixed
+regime) → P(level > thr) by interpolating the ladder's CDF. Scored as an
+alert would be used. Thresholds = station train-era q90/q95/q99 level.
+
+| threshold | source | best-cut CSI | hit rate at FAR ≤ 0.30 | Brier (clim) |
+|---|---|---|---|---|
+| q90 | point > thr | 0.657 | 0.763 | 0.042 (0.094) |
+| q90 | **P(exceed), ens ladder** | **0.664** | **0.833** | **0.031** |
+| q90 | P(exceed), memmax ladder | 0.638 | 0.830 | 0.037 |
+| q95 | point > thr | 0.571 | 0.659 | 0.027 (0.052) |
+| q95 | **ens ladder** | **0.574** | **0.733** | **0.021** |
+| q99 | point > thr | 0.417 | 0.475 | 0.009 (0.013) |
+| q99 | **ens ladder** | **0.444** | **0.524** | **0.007** |
+| q99 | memmax ladder | 0.395 | 0.394 | 0.008 |
+
+Verdicts: (1) **The probability product beats the point-threshold
+alert at every level** — modestly on best-cut CSI (+0.7 to +2.7 pp),
+clearly on what an operator actually gets: at a 30% false-alarm budget
+the ladder catches 83/73/52% of q90/q95/q99 exceedances vs 76/66/48%,
+and Brier is 25–30% lower. The optimal alert cut is P ≈ 0.30–0.40, not
+0.5 — the product must expose the probability, not a yes/no. (2) **In
+tree land the member-max tail does NOT help the probability product**
+(q99 CSI 0.395 vs 0.444; it over-forecasts, mean P 0.017 vs event rate
+0.013); the composite ≈ ens. Different question from Phase 7's q99
+*coverage* — a wet scenario widens the envelope but mis-prices the
+probability. (3) **The ens ladder is under-confident in the middle
+bins** (forecast 0.35 → observed 0.42; 0.55 → 0.68; 0.75 → 0.86 at q99):
+free skill via a post-hoc isotonic recalibration of P fitted on the
+validation years — cheap, do it before any product. (4) The LSTM
+ladder (Arc 8b-3) is expected to do better here — Phase 7 showed it
+learns conditional widening where the tree only widens globally — and
+its P(exceed) can be scored with exactly this script's `p_exceed`.
+Ladder parquets level_lq_{q50,q75,q90,q95,q99}_L1.parquet (pred_ens /
+pred_memmax), models results/models/hgb_level_q*_L1.joblib.
+
 **ARC PASS-OFF (8b-3, the LSTM level ladder — Phase 7's calibrated
 ladder on the practical target).** `train_lstm.py --target level`
 (smoke-tested on CPU): target = EA daily-MAX stage from the committed

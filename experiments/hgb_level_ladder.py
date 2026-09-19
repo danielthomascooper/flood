@@ -110,9 +110,9 @@ def p_exceed(M, thr):
 def score(prob, o, name, thr_name):
     cuts = np.linspace(0.05, 0.95, 19)
     best = max(((((o & (prob >= c)).sum()) / max(((o | (prob >= c)).sum()), 1), c) for c in cuts))
-    # hit rate at the largest cut whose FAR <= 0.30
+    # hit rate at the LOWEST cut whose FAR <= 0.30 (most alerts within budget)
     hr_budget = 0.0
-    for c in cuts[::-1]:
+    for c in cuts:
         f = prob >= c; hits = (o & f).sum(); fa = (~o & f).sum()
         if hits + fa and fa / (hits + fa) <= 0.30:
             hr_budget = hits / max(o.sum(), 1); break
@@ -132,6 +132,7 @@ for thr_name in ("q90", "q95", "q99"):
                "ladder_composite": p_exceed(np.sort(comp, axis=1), thr)}
     for name, prob in sources.items():
         cards.append(score(prob, o, name, thr_name))
+        cards[-1]["mean_p"] = float(prob.mean())
         if name != "point_direct":
             bins = np.clip((prob * 10).astype(int), 0, 9)
             for b in range(10):
