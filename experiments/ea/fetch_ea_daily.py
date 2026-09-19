@@ -9,7 +9,7 @@ with the EA quality flag for each, 1950s -> present, open government licence.
 
 Input catalogue: cache/ea/measures_level_stations.parquet (built from
 /hydrology/id/stations?observedProperty=waterLevel). Output: one parquet per
-NRFA id, cache/ea/daily/<nrfa>.parquet, indexed by date. Resume-safe.
+NRFA id, cache/ea/daily_wd/<nrfa>.parquet, indexed by WATER DAY (09:00 start). Resume-safe.
 """
 import io, sys, time
 from pathlib import Path
@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "experiments"))
 from common import good_catchments
 
-OUT = ROOT / "cache/ea/daily"; OUT.mkdir(parents=True, exist_ok=True)
+OUT = ROOT / "cache/ea/daily_wd"; OUT.mkdir(parents=True, exist_ok=True)
 API = "https://environment.data.gov.uk/hydrology/id/measures/{}/readings.csv"
 WANT = {("level", "maximum"): "level_max", ("level", "minimum"): "level_min",
         ("flow", "maximum"): "flow_max", ("flow", "mean"): "flow_mean"}
@@ -29,13 +29,39 @@ M = pd.read_parquet(ROOT / "cache/ea/measures_level_stations.parquet")
 M = M[M.nrfa.isin(set(good_catchments())) & (M.period == 86400) & M.measure.str.endswith("qualified")]
 
 
-def series(measure):
+def water_day(d, extreme):
+    """EA daily statistics cover the WATER DAY 09:00 -> 09:00. Daily MEANS are
+    stamped on the day itself, but daily MAX/MIN rows are stamped with the TIME
+    THE EXTREME OCCURRED, so a peak at 05:00 on the 25th belongs to the water
+    day that began on the 24th while its `date` field says the 25th. Keying on
+    `date` mislabels ~15% of days and leaves a hole beside each. Assign each
+    extreme to the water day of its timestamp; a reading at exactly 09:00 sits
+    on the boundary - it starts its own day unless that day already has a later
+    reading and the previous day is empty (a rising limb peaking at day end)."""
+    if not extreme:
+        return d.drop_duplicates("date").set_index("date")[["value", "quality"]].sort_index()
+    d = d.sort_values("dateTime").reset_index(drop=True)
+    wd = (d.dateTime - pd.Timedelta(hours=9)).dt.floor("D")
+    on_boundary = (d.dateTime.dt.hour == 9) & (d.dateTime.dt.minute == 0)
+    dup_next = wd.eq(wd.shift(-1))                       # same water day as the next row
+    prev_empty = ~(wd - pd.Timedelta(days=1)).isin(set(wd))
+    wd = wd.where(~(on_boundary & dup_next & prev_empty), wd - pd.Timedelta(days=1))
+    d = d.assign(date=wd)
+    # any residual duplicates: keep the more extreme value
+    d = d.sort_values(["date", "value"], ascending=[True, extreme != "max"]).drop_duplicates("date")
+    return d.set_index("date")[["value", "quality"]].sort_index()
+
+
+def series(measure, extreme=None):
     for attempt in range(4):
         try:
             r = requests.get(API.format(measure), params={"_limit": 2000000}, timeout=600)
             r.raise_for_status()
-            d = pd.read_csv(io.StringIO(r.text), usecols=["date", "value", "quality"], parse_dates=["date"])
-            return d.drop_duplicates("date").set_index("date").sort_index()
+            if not r.text.strip():                 # measure listed but holds no readings
+                return None
+            d = pd.read_csv(io.StringIO(r.text), usecols=["dateTime", "date", "value", "quality"],
+                            parse_dates=["dateTime", "date"])
+            return water_day(d, extreme)
         except Exception as e:
             err = e; time.sleep(30 * (attempt + 1))
     raise RuntimeError(f"{measure}: {err}")
@@ -56,7 +82,9 @@ for n, nrfa in enumerate(ids, 1):
         for (par, stat), name in WANT.items():
             mm = g[(g.parameter == par) & (g.stat == stat)].measure
             if len(mm):
-                got[name] = series(mm.iloc[0])
+                ser = series(mm.iloc[0], {"maximum": "max", "minimum": "min"}.get(stat))
+                if ser is not None and len(ser):
+                    got[name] = ser
         if "level_max" in got and (best is None or got["level_max"].value.notna().sum() > best[1]["level_max"].value.notna().sum()):
             best = (st, got)
     if best is None:
