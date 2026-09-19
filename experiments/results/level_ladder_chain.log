@@ -15,3 +15,35 @@ q95: wrote level_lq_q95_L1.parquet
 q99: 2,388,928 train rows, fitted in 136s
 q99: wrote level_lq_q99_L1.parquet
 === LEVEL LADDER DONE Sat Sep 19 05:39:55 PM BST 2026
+=== level ladder L2/L3 start Sat Sep 19 05:44:30 PM BST 2026
+  217 stations, 4,121,481 rows in 14s
+q50: 2,386,502 train rows, fitted in 212s
+q50: wrote level_lq_q50_L2.parquet
+  217 stations, 4,121,481 rows in 14s
+q75: 2,386,502 train rows, fitted in 179s
+q75: wrote level_lq_q75_L2.parquet
+  217 stations, 4,121,481 rows in 14s
+q90: 2,386,502 train rows, fitted in 174s
+q90: wrote level_lq_q90_L2.parquet
+  217 stations, 4,121,481 rows in 14s
+q95: 2,386,502 train rows, fitted in 164s
+q95: wrote level_lq_q95_L2.parquet
+  217 stations, 4,121,481 rows in 14s
+q99: 2,386,502 train rows, fitted in 141s
+q99: wrote level_lq_q99_L2.parquet
+  217 stations, 4,121,481 rows in 14s
+q50: 2,384,801 train rows, fitted in 177s
+q50: wrote level_lq_q50_L3.parquet
+  217 stations, 4,121,481 rows in 14s
+q75: 2,384,801 train rows, fitted in 173s
+q75: wrote level_lq_q75_L3.parquet
+  217 stations, 4,121,481 rows in 14s
+q90: 2,384,801 train rows, fitted in 169s
+q90: wrote level_lq_q90_L3.parquet
+  217 stations, 4,121,481 rows in 14s
+q95: 2,384,801 train rows, fitted in 161s
+q95: wrote level_lq_q95_L3.parquet
+  217 stations, 4,121,481 rows in 14s
+q99: 2,384,801 train rows, fitted in 137s
+q99: wrote level_lq_q99_L3.parquet
+=== LEVEL LADDER L23 DONE Sat Sep 19 06:18:05 PM BST 2026

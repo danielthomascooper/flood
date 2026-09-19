@@ -1272,6 +1272,38 @@ its P(exceed) can be scored with exactly this script's `p_exceed`.
 Ladder parquets level_lq_{q50,q75,q90,q95,q99}_L1.parquet (pred_ens /
 pred_memmax), models results/models/hgb_level_q*_L1.joblib.
 
+**8b-2 at leads 2–3 + recalibration (2026-09-19, level_ladder_cards_L{2,3}
+.csv, scored 2014-10→2022-09).** Held-out isotonic recalibration of P
+(fitted 2010–14) changes nothing (L1 q90 CSI 0.645→0.645, Brier equal)
+— the mid-bin under-confidence is not exploitable; dropped. Leads 2–3,
+ens-ladder P(exceed) vs point>thr, best-cut CSI / hit rate at FAR≤0.30:
+L2 q90 0.500 vs 0.491 / **0.62 vs 0.61**, q95 0.391 vs 0.360 / **0.38 vs
+0.00**, q99 0.242 vs 0.183 / 0.06 vs 0.00; L3 q90 0.446 vs 0.431 / **0.48
+vs 0.00**, q95 0.339 vs 0.296 / 0.26 vs 0.00, q99 0.198 vs 0.126. Beyond
+lead 1 a point-threshold alert cannot even meet a 30% false-alarm budget
+at q95+; the probability product still can at q90/q95. Memmax-driven
+ladder is worse at every lead/threshold (over-forecasts). Best cuts fall
+to P≈0.15–0.30 at leads 2–3. Honest summary for the product: 1-day
+alerts are good, 2-day alerts are usable at q90/q95 only, 3-day is a
+"wet spell coming" signal.
+
+**8c RESULT — operational rain costs almost nothing (2026-09-19,
+`hgb_level_oprain.py`; oprain_rain_agreement.csv, level_oprain_cards.csv).**
+EA gauge catchment rain (gauges inside the boundary else 3 nearest ≤30
+km; median 3 gauges/catchment; 995 gauges pulled by fetch_ea_rain.py)
+vs HadUK on the test years: r 0.971, bias −2.0%, q95 ratio 0.98,
+coverage 99%, best alignment shift 0 for all 217 (both are 09:00 water
+days). Deployed configuration = models trained on HadUK, fed EA rain in
+the observed-rain window at issue time (`features(gid, rain=)`), on
+840k identical rows: point NSE 0.859→0.856, MAE 4.3→4.4 cm; ladder q90/
+q95/q99 best CSI 0.664/0.575/0.445 → 0.661/0.570/0.440, hit@FAR30 0.834/
+0.734/0.527 → 0.829/0.727/0.516, Brier unchanged. **The last unknown
+between the research model and a deployable one is closed: every input
+now exists at issue time** (EA level + flow + rain via one API, GEFS
+real-time, donors from the same API). Remaining product work is
+engineering (8d), not science. Cheap upgrade left on the table: the
+issue-day 00Z GEFS run (we use the previous day's).
+
 **ARC PASS-OFF (8b-3, the LSTM level ladder — Phase 7's calibrated
 ladder on the practical target).** `train_lstm.py --target level`
 (smoke-tested on CPU): target = EA daily-MAX stage from the committed
