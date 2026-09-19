@@ -1147,6 +1147,62 @@ For the pivot: a level forecast at an un-telemetered site is viable at
 leads 2–3 at near-gauged point skill, but its lead-1 envelope will be
 ~70% wider.
 
+## Phase 8 (opened 2026-09-19): from research model to a practical river LEVEL forecast
+
+Direction agreed 2026-09-16: finish the research for publication (Arc
+queue complete through 7j; only the TIGGE fill + write-up remain), then
+pivot. Phase 8 starts in parallel because none of it waits on TIGGE.
+The research model predicts daily-MEAN specific discharge from inputs
+that do not exist in real time; a practical product needs (1) LEVEL,
+(2) the day's PEAK (then hourly), (3) operational inputs, (4) threshold
+skill as the metric. The ladder, the mixed-regime fine-tune and the
+donor features all transfer unchanged.
+
+**8a — data foundation (2026-09-19, CPU box).** EA Hydrology API
+(open government licence, no key): 2,638 level stations, every one with
+15-minute and daily max/min level. Joined on NRFA id: **219 of the 416
+CAMELS-GB catchments have an EA level station** (the rest are SEPA/NRW
+— Scotland/Wales, not in this API); 216 also carry daily max/mean and
+15-min flow. Records are deep (stations opened median 1966; probed
+series start 1956–1977) and current to ~2 days ago, with a per-day
+quality flag (Good / Estimated / Suspect / Unchecked / Missing).
+Catalogue: cache/ea/stations_level.json + measures_level_stations
+.parquet; puller `experiments/ea/fetch_ea_daily.py` → cache/ea/daily/
+<nrfa>.parquet (level_max, level_min, flow_max, flow_mean + flags),
+~5 s/station. So the level experiment runs on the EXISTING split
+(train ≤2010-09, test 2010-10→2022-09) with existing forcings,
+attributes, donors and GEFS parquets — no new forcing work for stage 1.
+Also running since 2026-09-15: the daily ECMWF open-data ENS archive
+(`ecmwf-od.timer`), the operational feed with no public archive.
+
+**8b — first experiment (next): level as the target, tree then LSTM.**
+Target = next-day (and t+2, t+3) DAILY-MAX level, standardised per
+station on training years (stage datums are arbitrary; z-score, same as
+the LSTM does for flow); Good+Estimated days only. Features = the
+mixed-regime forecast set + own level_max lags. Three routes compared on
+identical rows: (i) direct level model; (ii) the existing flow model →
+per-station monotone flow→level_max map fitted on training years (the
+rating-curve route, expected to fail high: rating half-width ±10.6%);
+(iii) persistence of level. Metrics change with the aim: exceedance
+skill at each station's q90/q95/q99 level (hit rate, false-alarm ratio,
+CSI), peak-day level error in metres and in station-σ, calibration of
+P(exceed) from the ladder. NSE only as a bridge to the research numbers.
+
+**8c — operational inputs.** Substitution test: replace HadUK observed
+rain (months in arrears) with what exists at issue time — EA rain
+gauges (same API, observedProperty=rainfall) and/or the NWP analysis —
+and measure the cost. Own level/flow and donors are available from the
+EA API in near real time, so the nowcast features survive deployment.
+NWP feed: GEFS real-time now (trained on it, transfer verified);
+ECMWF open data once the archive is long enough to test transfer.
+
+**8d — expansion + product.** Beyond CAMELS: the other ~2,400 EA level
+stations have no CAMELS attributes/boundaries — needs catchment
+delineation or a no-attribute model; SEPA/NRW APIs for Scotland/Wales.
+Hourly (15-min level is there for all 2,638) as the second release.
+Product = daily static outlook: P(level above threshold) at leads 1–3
+per station, official warnings linked, calibration and misses published.
+
 ### Phase 6 (2026-08-30): from simulation to forecasting
 
 Nothing built so far forecasts: every model's inputs are complete only at
