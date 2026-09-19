@@ -1188,6 +1188,53 @@ skill at each station's q90/q95/q99 level (hit rate, false-alarm ratio,
 CSI), peak-day level error in metres and in station-σ, calibration of
 P(exceed) from the ladder. NSE only as a bridge to the research numbers.
 
+**8b RESULT (2026-09-19, `hgb_level_forecast.py`, 217 stations with ≥10
+train / ≥8 test years of Good+Estimated daily-max level; GEFS-covered
+test rows, 915k per lead; cards level_fc_cards.csv).** DATA TRAP FIRST:
+EA daily max/min rows cover the 09:00→09:00 water day and are stamped
+at the TIME OF THE EXTREME; keying on `date` mislabelled ~15% of days
+(symptom: fewer valid lag-1 pairs than lag-2). Fixed in
+`fetch_ea_daily.py water_day()`; corrected pull in cache/ea/daily_wd/.
+The contaminated first run scored HIGHER (L1 NSE 0.914) — it had
+silently dropped the hard days; never quote it.
+
+| lead | route | NSE (z-level) | MAE m | AMAX-day err m | q90 CSI | q95 CSI | q99 CSI (hit / FAR) |
+|---|---|---|---|---|---|---|---|
+| 1 | **direct level** | **0.857** | **0.044** | −0.22 | **0.657** | **0.571** | **0.417** (0.48 / 0.23) |
+| 1 | flow → level map | 0.798 | 0.059 | −0.28 | 0.598 | 0.509 | 0.347 (0.43 / 0.35) |
+| 1 | persistence | 0.721 | 0.059 | −0.31 | 0.541 | 0.450 | 0.341 (0.51 / 0.49) |
+| 2 | direct level | **0.726** | **0.064** | −0.50 | **0.516** | **0.400** | 0.228 (0.26 / 0.33) |
+| 2 | flow → level map | 0.657 | 0.079 | −0.44 | 0.489 | 0.389 | **0.234** (0.31 / 0.51) |
+| 3 | direct level | **0.658** | **0.073** | −0.58 | **0.459** | 0.341 | 0.167 (0.19 / 0.39) |
+| 3 | flow → level map | 0.579 | 0.090 | −0.53 | 0.443 | 0.340 | **0.188** (0.25 / 0.57) |
+
+Verdicts: (1) **Train on level directly.** It beats the rating-curve
+route on error at every lead and on exceedance skill at lead 1 at every
+threshold, mainly through far fewer false alarms (q99 FAR 0.23 vs 0.35);
+typical error is 4–7 cm. (2) Level persistence is a much stronger
+baseline than flow persistence was (L1 0.721) — stage is smoother than
+discharge — so gains must be quoted against it. (3) **The research
+finding transfers intact: a POINT forecast under-calls peaks** — −0.22 m
+on annual-max days at lead 1, −0.5/−0.6 m (≈2–2.6 station σ) at leads
+2–3, and only 48% of q99 exceedances are called at lead 1. At leads 2–3
+the smoother flow-map route even edges the q99 CSI by over-forecasting
+(hit rate up, false alarms 0.5+). A usable product is therefore NOT a
+point level with a threshold; it is P(exceed) from the quantile ladder
+with the member-max tail — exactly the Phase 7 machinery. (4) Issue-time
+convention falls out cleanly: water day t ends 09:00 on t+1, so lead 1 =
+"issued 09:00, peak level over the next 24 h". We currently drive it
+with the 00Z GEFS run from the PREVIOUS day (research convention,
+conservative by 24 h); operationally the 00Z run of the issue day is
+available by 09:00 — free skill to claim in 8c.
+
+**8b-2 (next): level ladder → exceedance probability.** Quantile trees
+(q50/q75/q90/q95/q99) on z-level, mixed regime, driven with ens-mean and
+member-max rain; P(exceed thr) by interpolating the ladder; score CSI at
+the best probability cut, reliability of P(exceed), and hit rate at a
+fixed false-alarm budget. Then the same target on Arc (LSTM level ladder
+with the mixed-regime fine-tune), which is where Phase 7 says the
+calibrated ladder belongs.
+
 **8c — operational inputs.** Substitution test: replace HadUK observed
 rain (months in arrears) with what exists at issue time — EA rain
 gauges (same API, observedProperty=rainfall) and/or the NWP analysis —
