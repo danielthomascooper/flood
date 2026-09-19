@@ -1235,6 +1235,40 @@ fixed false-alarm budget. Then the same target on Arc (LSTM level ladder
 with the mixed-regime fine-tune), which is where Phase 7 says the
 calibrated ladder belongs.
 
+**ARC PASS-OFF (8b-3, the LSTM level ladder — Phase 7's calibrated
+ladder on the practical target).** `train_lstm.py --target level`
+(smoke-tested on CPU): target = EA daily-MAX stage from the committed
+`experiments/results/ea/level_max_daily.parquet` (water-day corrected;
+217 basins pass the ≥10 train / ≥8 test-year filter, the rest are
+dropped automatically), z-scored per basin on train years; observed
+flow (z) becomes an extra dynamic channel (known at issue time);
+`--autoreg` feeds back level; outputs are in METRES, no zero-clip.
+Same 7c→7h recipe, lead 1 first:
+
+```
+# (a) ceiling: level quantile ladder on observed rain, 20 epochs
+python experiments/lstm/train_lstm.py --target level --lead 1 --autoreg \
+  --head quantile --fcrain perfect --epochs 20 \
+  --out experiments/results/lstm_level_perfect_q_L1
+# (b) frozen ladder under real rain (inference-only: copy (a)'s dir, same flags,
+#     --fcrain <parquet>, --epochs 20): ens parquet -> lstm_level_ens_q_L1,
+#     memmax parquet -> lstm_level_memmax_q_L1
+# (c) mixed-regime fine-tune from (a)
+python experiments/lstm/train_lstm.py --target level --lead 1 --autoreg \
+  --head quantile --fcrain experiments/results/nwp/gefs_catchment_leads_ens.parquet \
+  --fcrain-train --init-from experiments/results/lstm_level_perfect_q_L1 \
+  --lr 2e-4 --epochs 4 --out experiments/results/lstm_level_ft_ens_q_L1
+# (d) memmax through (c): copy (c)'s dir, --fcrain memmax parquet, --epochs 4
+# (e) if time: the same four at --lead 2 and 3; an mse-head point twin of (a)
+```
+Report, on GEFS-covered rows: q50 NSE(z) / MAE in m; q99 coverage of
+the station annual-max-level days and pooled q95/q99; 90% width in m.
+Comparators: tree point (8b) L1 NSE 0.857 / MAE 4.4 cm / AMAX-day −0.22
+m; tree ladder (8b-2, `hgb_level_ladder.py`, results pending in
+level_ladder_cards.csv). The CPU box turns any of these parquets into
+P(exceed) alert skill (best-cut CSI, hit rate at FAR ≤ 0.30, Brier,
+reliability) — commit the run dirs as usual.
+
 **8c — operational inputs.** Substitution test: replace HadUK observed
 rain (months in arrears) with what exists at issue time — EA rain
 gauges (same API, observedProperty=rainfall) and/or the NWP analysis —

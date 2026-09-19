@@ -187,6 +187,12 @@ def main():
                          "genuinely-future steps; rows whose issue day has no "
                          "forecast keep observed rain and are marked "
                          "covered=False in the output parquet")
+    ap.add_argument("--target", choices=["flow", "level"], default="flow",
+                    help="level: predict the EA daily-MAX stage (z-scored per basin on train "
+                         "years) from experiments/results/ea/level_max_daily.parquet; basins "
+                         "without >=10 train / >=8 test years of level are dropped; observed "
+                         "flow (z) is added as an extra dynamic channel since it is known at "
+                         "issue time; --autoreg then feeds back LEVEL")
     ap.add_argument("--fcrain-train", action="store_true",
                     help="also put the --fcrain forecast into TRAIN/VAL windows "
                          "wherever the archive covers them (observed rain elsewhere) "
@@ -211,6 +217,22 @@ def main():
     print(f"device: {dev}", flush=True)
 
     gauges = good_catchments()
+    LEVEL = None
+    if args.target == "level":
+        LEVEL = pd.read_parquet(Path(__file__).resolve().parents[2]
+                                / "experiments/results/ea/level_max_daily.parquet")
+        LEVEL.columns = LEVEL.columns.astype(int)
+        keep = []
+        for g in gauges:
+            if g not in LEVEL.columns:
+                continue
+            h = LEVEL[g]
+            ntr = h.loc["1970-10-01":TRAIN_END].notna().sum()
+            nte = h.loc[TEST_START:"2022-09-30"].notna().sum()
+            if ntr >= 3650 and nte >= 2920:
+                keep.append(g)
+        print(f"level target: {len(keep)} of {len(gauges)} basins have an EA level record", flush=True)
+        gauges = keep
     if args.basins:
         gauges = gauges[:args.basins]
     print(f"loading {len(gauges)} basins...", flush=True)
@@ -247,8 +269,16 @@ def main():
             X[b] = np.concatenate(
                 [X[b], donor[b].reindex(d.index).fillna(0.0).to_numpy("float32")],
                 axis=1)
-        y = d["discharge_spec"].to_numpy("float32")
-        ytr = d.loc[:train_end, "discharge_spec"]
+        if LEVEL is not None:                       # level target; flow becomes an input
+            q = d["discharge_spec"].to_numpy("float32")
+            qtr = d.loc[:train_end, "discharge_spec"]
+            qz = (q - float(qtr.mean())) / (float(qtr.std()) + 1e-6)
+            X[b] = np.concatenate([X[b], np.nan_to_num(qz, nan=0.0)[:, None].astype("float32")], axis=1)
+            y = LEVEL[b].reindex(d.index).to_numpy("float32")
+            ytr = LEVEL[b].reindex(d.index).loc[:train_end]
+        else:
+            y = d["discharge_spec"].to_numpy("float32")
+            ytr = d.loc[:train_end, "discharge_spec"]
         mu, sd = float(ytr.mean()), float(ytr.std()) + 1e-6
         y_stats[b] = (mu, sd)
         Y[b] = (y - mu) / sd
@@ -373,13 +403,16 @@ def main():
     obs = np.array([Y[b][t + L] for b, t in te_index], dtype=np.float32) * sd + mu
     idx = pd.DatetimeIndex([dates[b][t + L] for b, t in te_index], name="date")
     if args.head == "quantile":
-        q = np.clip(p_norm * sd[:, None] + mu[:, None], 0, None)
+        q = p_norm * sd[:, None] + mu[:, None]
+        if args.target == "flow":
+            q = np.clip(q, 0, None)
         res = pd.DataFrame({"gid": gid, "obs": obs, "pred": q[:, 2]}, index=idx)
         for a, col in zip(ALPHAS, q.T):
             res[f"q{int(a*100):02d}"] = col
     else:
+        pr = p_norm * sd + mu
         res = pd.DataFrame({"gid": gid, "obs": obs,
-                            "pred": np.clip(p_norm * sd + mu, 0, None)}, index=idx)
+                            "pred": np.clip(pr, 0, None) if args.target == "flow" else pr}, index=idx)
     if fc_tab is not None:
         res["covered"] = [COV[b][t] for b, t in te_index]
     res.to_parquet(out / "lstm_test_predictions.parquet")
