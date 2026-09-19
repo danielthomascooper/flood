@@ -56,15 +56,21 @@ def good_catchments(min_complete=95):
     return hm.loc[hm.daily_flow_perc_complete >= min_complete, "gauge_id"].tolist()
 
 
-def features(gid):
+def features(gid, rain=None):
     """Dynamic features for one catchment. The lags and rolling windows are a
     hand-built stand-in for catchment storage (see hgb_ablation.py for what
-    they are worth: 0.47 median NSE)."""
+    they are worth: 0.47 median NSE).
+
+    rain: optional daily series (mm/day, DatetimeIndex) that REPLACES HadUK
+    precipitation wherever it is not NaN - the Phase 8c operational-rain
+    substitution (EA gauge rain at issue time instead of HadUK)."""
     f = sorted(DAILY.glob(f"*_{gid}_*.csv"))[0]
     d = pd.read_csv(f, parse_dates=["date"], na_values=["NaN"],
                     usecols=["date", "precipitation_haduk", "pet_hydrope",
                              "temperature_haduk", "discharge_spec"]).set_index("date")
     p, e, t = d.precipitation_haduk, d.pet_hydrope, d.temperature_haduk
+    if rain is not None:
+        p = p.where(rain.reindex(p.index).isna(), rain.reindex(p.index)).astype("float32")
     X = {}
     for lag in range(1, 8):
         X[f"p_lag{lag}"] = p.shift(lag)

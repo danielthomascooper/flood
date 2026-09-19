@@ -28,15 +28,17 @@ from level_common import stations, build, FC_START
 OUT = Path(__file__).resolve().parent / "results"
 MODELS = OUT / "models"
 MODE = sys.argv[1] if len(sys.argv) > 1 else "score"
+# fit modes: q99 (lead 1) or q99_L2 / q99_L3; score modes: score, score_L2, score_L3
+L = int(MODE.rsplit("_L", 1)[1]) if "_L" in MODE else 1
+MODE = MODE.split("_L")[0]
 ALPHAS = {"q50": .50, "q75": .75, "q90": .90, "q95": .95, "q99": .99}
 BASE = dict(max_iter=400, learning_rate=0.08, max_leaf_nodes=63,
             min_samples_leaf=100, l2_regularization=1.0,
             early_stopping=True, validation_fraction=0.1, random_state=0)
-L = 1
 
 
 def run(q):
-    dst = OUT / f"level_lq_{q}_L1.parquet"
+    dst = OUT / f"level_lq_{q}_L{L}.parquet"
     if dst.exists():
         print(f"{q}: exists, skipping"); return
     gids, st = stations()
@@ -52,15 +54,16 @@ def run(q):
     def rain(mask, src):
         X = DATA.loc[mask, cols].copy()
         sub = DATA.loc[mask]
-        fc = sub[f"{src}_next1"].values
-        X["p_next1"] = np.where(np.isnan(fc), sub["p_next1"].values, fc) if src == "mixed" else fc
+        for k in range(1, L + 1):
+            X[f"p_next{k}"] = sub[f"{src}_next{k}"].values
         return X
 
     Xtr = DATA.loc[is_tr, cols].copy()
-    fc = DATA.loc[is_tr, "fc_next1"].values
-    Xtr["p_next1"] = np.where(np.isnan(fc), DATA.loc[is_tr, "p_next1"].values, fc)
+    for k in range(1, L + 1):
+        fc = DATA.loc[is_tr, f"fc_next{k}"].values
+        Xtr[f"p_next{k}"] = np.where(np.isnan(fc), DATA.loc[is_tr, f"p_next{k}"].values, fc)
     MODELS.mkdir(exist_ok=True)
-    mpath = MODELS / f"hgb_level_{q}_L1.joblib"
+    mpath = MODELS / f"hgb_level_{q}_L{L}.joblib"
     if mpath.exists():
         m = joblib.load(mpath)
     else:
@@ -84,10 +87,10 @@ if MODE != "score":
 
 # ---- score ---------------------------------------------------------------
 st = pd.read_csv(OUT / "level_fc_station_stats.csv", index_col=0)
-Q = {q: pd.read_parquet(OUT / f"level_lq_{q}_L1.parquet") for q in ALPHAS}
+Q = {q: pd.read_parquet(OUT / f"level_lq_{q}_L{L}.parquet") for q in ALPHAS}
 base = Q["q50"]; cov = base.covered.values
 obs = base.obs.values[cov]; gid = base.gid.values[cov]
-point = pd.read_parquet(OUT / "level_fc_L1.parquet")
+point = pd.read_parquet(OUT / f"level_fc_L{L}.parquet")
 assert len(point) == len(base) and (point.gid.values == base.gid.values).all()
 alphas = np.array(list(ALPHAS.values()))
 
@@ -121,6 +124,10 @@ def score(prob, o, name, thr_name):
                 brier=float(np.mean((prob - o) ** 2)), clim_brier=float(np.mean((o.mean() - o) ** 2)))
 
 
+from sklearn.isotonic import IsotonicRegression
+dates = base.index[cov]
+CAL = np.asarray(dates < "2014-10-01")            # calibration years 2010-11..2014-09
+EVAL = ~CAL                                        # 2014-10..2022-09, scored for every source
 cards, rel = [], []
 for thr_name in ("q90", "q95", "q99"):
     thr = ((pd.Series(gid).map(st[thr_name]) - pd.Series(gid).map(st.mu)) / pd.Series(gid).map(st.sd)).values
@@ -130,18 +137,21 @@ for thr_name in ("q90", "q95", "q99"):
     sources = {"point_direct": (point.direct.values[cov] > thr).astype(float),
                "ladder_ens": p_exceed(ME, thr), "ladder_memmax": p_exceed(MM, thr),
                "ladder_composite": p_exceed(np.sort(comp, axis=1), thr)}
+    iso = IsotonicRegression(y_min=0, y_max=1, out_of_bounds="clip").fit(sources["ladder_ens"][CAL], o[CAL])
+    sources["ladder_ens_recal"] = iso.predict(sources["ladder_ens"])
     for name, prob in sources.items():
-        cards.append(score(prob, o, name, thr_name))
-        cards[-1]["mean_p"] = float(prob.mean())
+        cards.append(score(prob[EVAL], o[EVAL], name, thr_name))
+        cards[-1]["mean_p"] = float(prob[EVAL].mean())
         if name != "point_direct":
             bins = np.clip((prob * 10).astype(int), 0, 9)
             for b in range(10):
-                sel = bins == b
+                sel = (bins == b) & EVAL
                 if sel.sum() >= 50:
                     rel.append(dict(source=name, threshold=thr_name, bin=b / 10, n=int(sel.sum()),
                                     forecast_p=float(prob[sel].mean()), observed=float(o[sel].mean())))
 df = pd.DataFrame(cards)
 print(df.round(3).to_string(index=False))
-df.to_csv(OUT / "level_ladder_cards.csv", index=False)
-pd.DataFrame(rel).to_csv(OUT / "level_ladder_reliability.csv", index=False)
+df.to_csv(OUT / f"level_ladder_cards_L{L}.csv", index=False)
+pd.DataFrame(rel).to_csv(OUT / f"level_ladder_reliability_L{L}.csv", index=False)
+print(f"(scored on {EVAL.sum():,} rows 2014-10..2022-09; recalibration fitted on {CAL.sum():,} earlier rows)")
 print("wrote level_ladder_cards.csv, level_ladder_reliability.csv")
